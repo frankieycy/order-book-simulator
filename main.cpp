@@ -2,12 +2,11 @@
 using namespace std;
 
 int main() {
-    int id = 0;
-    vector<Order*> orders(10);
-    for (int i=0; i<orders.size(); i++) {
-        Order* tmp = new LimitOrder(0,0,"AAPL",BID,100);
-        orders[i] = new ModifyOrder(id++,0,"AAPL",0,*tmp);;
-        cout << orders[i]->getAsJson() << endl;
-    }
+    Order* o1 = new LimitOrder(0,0,"AAPL",BID,3,10);
+    Order* o2 = new MarketOrder(1,1,"AAPL",ASK,2);
+    LimitOrderBook ob;
+    cout << o1->read() << endl;
+    cout << o2->read() << endl;
+    cout << ob.getAsJson() << endl;
     return 0;
 }
