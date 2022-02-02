@@ -2,11 +2,10 @@
 #define UTIL_CPP
 #include <iostream>
 #include <sstream>
-#include <cmath>
-#include <map>
 #include <string>
 #include <vector>
 #include <deque>
+#include <map>
 using namespace std;
 
 inline void seperator(int length=20){cout << string(length,'-') << endl;}
@@ -27,7 +26,7 @@ S& operator<<(S& out, const vector<T>& vec){
 
 template <class S, class T>
 S& operator<<(S& out, const deque<T>& vec){
-    // print elements of a vector
+    // print elements of a deque
     if(vec.size()==0) out << "[]";
     else{
         out << "[";
