@@ -6,13 +6,14 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <deque>
 using namespace std;
 
 inline void seperator(int length=20){cout << string(length,'-') << endl;}
 inline double uniformRand(double min=0, double max=1){return min+(max-min)*rand()/RAND_MAX;}
 
-template <class T>
-ostream& operator<<(ostream& out, const vector<T>& vec){
+template <class S, class T>
+S& operator<<(S& out, const vector<T>& vec){
     // print elements of a vector
     if(vec.size()==0) out << "[]";
     else{
@@ -25,7 +26,7 @@ ostream& operator<<(ostream& out, const vector<T>& vec){
 }
 
 template <class S, class T>
-S& operator<<(S& out, const vector<T>& vec){
+S& operator<<(S& out, const deque<T>& vec){
     // print elements of a vector
     if(vec.size()==0) out << "[]";
     else{

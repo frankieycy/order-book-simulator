@@ -2,11 +2,18 @@
 using namespace std;
 
 int main() {
-    Order* o1 = new LimitOrder(0,0,"AAPL",BID,3,10);
-    Order* o2 = new MarketOrder(1,1,"AAPL",ASK,2);
+    int id = 0;
     LimitOrderBook ob;
-    cout << o1->read() << endl;
-    cout << o2->read() << endl;
-    cout << ob.getAsJson() << endl;
+    for (int i=0; i<1000000; i++) {
+        Side side = (uniformRand()<.5)?BID:ASK;
+        int size = (int)uniformRand(5,20);
+        double price = (int)uniformRand(8,12);
+        LimitOrder* o = new LimitOrder(id++,0,"TEST",side,size,price);
+        // cout << "submitted: " << o << endl;
+        ob.process(*o);
+        // ob.printBook(0,5);
+        // cout << endl;
+    }
+    ob.printBook(0,5);
     return 0;
 }
