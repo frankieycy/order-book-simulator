@@ -2,6 +2,7 @@
 #define UTIL_CPP
 #include <iostream>
 #include <sstream>
+#include <chrono>
 #include <string>
 #include <vector>
 #include <deque>
@@ -25,14 +26,14 @@ S& operator<<(S& out, const vector<T>& vec){
 }
 
 template <class S, class T>
-S& operator<<(S& out, const deque<T>& vec){
+S& operator<<(S& out, const deque<T>& deq){
     // print elements of a deque
-    if(vec.size()==0) out << "[]";
+    if(deq.size()==0) out << "[]";
     else{
         out << "[";
-        for(auto p=vec.begin(); p!=vec.end(); p++)
-            if(is_same<T,string>::value) out << "\"" << *p << "\"" << ((p==vec.end()-1)?"]":",");
-            else out << *p << ((p==vec.end()-1)?"]":",");
+        for(auto p=deq.begin(); p!=deq.end(); p++)
+            if(is_same<T,string>::value) out << "\"" << *p << "\"" << ((p==deq.end()-1)?"]":",");
+            else out << *p << ((p==deq.end()-1)?"]":",");
     }
     return out;
 }

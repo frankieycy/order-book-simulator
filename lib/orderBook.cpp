@@ -146,7 +146,6 @@ private:
     deque<double> bidPrices, askPrices;
     deque<MarketOrder*> bidMktQueue, askMktQueue;
     map<int,Order*> ordersLog;
-    map<int,double> bidsLog, asksLog;
     map<double,deque<LimitOrder*>> bids, asks;
 public:
     /**** constructors ****/
@@ -164,8 +163,6 @@ public:
     deque<MarketOrder*> getBidMktQueue() const {return bidMktQueue;}
     deque<MarketOrder*> getAskMktQueue() const {return askMktQueue;}
     map<int,Order*> getOrdersLog() const {return ordersLog;}
-    map<int,double> getBidsLog() const {return bidsLog;}
-    map<int,double> getAsksLog() const {return asksLog;}
     map<double,deque<LimitOrder*>> getBids() const {return bids;}
     map<double,deque<LimitOrder*>> getAsks() const {return asks;}
     deque<LimitOrder*> getBidOrders(double price) const;
@@ -182,11 +179,13 @@ public:
     double updateTopAsk();
     deque<double> updateBidPrices();
     deque<double> updateAskPrices();
+    void updateBidAskPrices();
     void process(const LimitOrder& order);
     void process(const MarketOrder& order, bool isNew=true);
     void process(const CancelOrder& order);
     void process(const ModifyOrder& order);
     void processMktQueue(Side side);
+    void processOrder(const Order& order);
 };
 
 class Exchange {
@@ -643,6 +642,13 @@ deque<double> LimitOrderBook::updateAskPrices() {
     return askPrices;
 }
 
+void LimitOrderBook::updateBidAskPrices() {
+    updateBidPrices();
+    updateAskPrices();
+    updateTopBid();
+    updateTopAsk();
+}
+
 void LimitOrderBook::process(const LimitOrder& order) {
     int id = order.getId();
     Side side = order.getSide();
@@ -652,8 +658,6 @@ void LimitOrderBook::process(const LimitOrder& order) {
     deque<double>* oppPrices = (side==BID)?&askPrices:&bidPrices;
     map<double,deque<LimitOrder*>>* sameSide = (side==BID)?&bids:&asks;
     map<double,deque<LimitOrder*>>* oppSide = (side==BID)?&asks:&bids;
-    map<int,double>* sameSideLOLog = (side==BID)?&bidsLog:&asksLog;
-    map<int,double>* oppSideLOLog = (side==BID)?&bidsLog:&asksLog;
     ordersLog[id] = order.copy();
     while (unfilledSize && oppPrices->size() && match(side, limit, oppPrices->front())) {
         deque<LimitOrder*>* orders = &oppSide->at(oppPrices->front());
@@ -663,10 +667,7 @@ void LimitOrderBook::process(const LimitOrder& order) {
             trades.push_back(trade);
             unfilledSize -= matchedSize;
             orders->front()->reduceSize(matchedSize);
-            if (!orders->front()->getSize()) {
-                oppSideLOLog->erase(orders->front()->getId());
-                orders->pop_front();
-            }
+            if (!orders->front()->getSize()) orders->pop_front();
         }
         if (!orders->size()) {
             oppSide->erase(oppPrices->front());
@@ -677,13 +678,9 @@ void LimitOrderBook::process(const LimitOrder& order) {
         LimitOrder* updatedOrder = order.copy();
         updatedOrder->setSize(unfilledSize);
         (*sameSide)[limit].push_back(updatedOrder);
-        (*sameSideLOLog)[id] = limit;
     }
     // TO-DO: recursive update
-    updateBidPrices();
-    updateAskPrices();
-    updateTopBid();
-    updateTopAsk();
+    updateBidAskPrices();
     processMktQueue((side==BID)?ASK:BID);
 }
 
@@ -694,7 +691,6 @@ void LimitOrderBook::process(const MarketOrder& order, bool isNew) {
     int unfilledSize = order.getSize();
     deque<double>* oppPrices = (side==BID)?&askPrices:&bidPrices;
     map<double,deque<LimitOrder*>>* oppSide = (side==BID)?&asks:&bids;
-    map<int,double>* oppSideLOLog = (side==BID)?&bidsLog:&asksLog;
     ordersLog[id] = order.copy();
     while (unfilledSize && oppPrices->size()) {
         deque<LimitOrder*>* orders = &oppSide->at(oppPrices->front());
@@ -704,10 +700,7 @@ void LimitOrderBook::process(const MarketOrder& order, bool isNew) {
             trades.push_back(trade);
             unfilledSize -= matchedSize;
             orders->front()->reduceSize(matchedSize);
-            if (!orders->front()->getSize()) {
-                oppSideLOLog->erase(orders->front()->getId());
-                orders->pop_front();
-            }
+            if (!orders->front()->getSize()) orders->pop_front();
         }
         if (!orders->size()) {
             oppSide->erase(oppPrices->front());
@@ -724,18 +717,39 @@ void LimitOrderBook::process(const MarketOrder& order, bool isNew) {
 }
 
 void LimitOrderBook::process(const CancelOrder& order) {
-    int id = order.getId();
-    auto i = ordersLog.find(id);
+    int id = order.getIdRef();
+    auto i = ordersLog.find(id); // SLOW!
     if (i == ordersLog.end()) return;
     Order* origOrder = i->second;
     OrderType type = origOrder->getType();
+    ordersLog[id] = order.copy();
     if (type == LIMIT) {
-        // Side side = origOrder->getSide();
-        // double price = origOrder->getPrice();
-        /* remove id from lim deque of side (at price key) */
+        LimitOrder* refOrder = dynamic_cast<LimitOrder*>(origOrder);
+        Side side = refOrder->getSide();
+        double limit = refOrder->getPrice();
+        map<double,deque<LimitOrder*>>* sameSide = (side==BID)?&bids:&asks;
+        bool onBook = sameSide->find(limit)!=sameSide->end();
+        if (onBook) {
+            deque<LimitOrder*>* orders = &sameSide->at(limit);
+            for (auto i=orders->begin(); i!=orders->end(); i++)
+                if ((*i)->getId()==id) {
+                    delete *i;
+                    orders->erase(i);
+                    break;
+                }
+            if (!orders->size()) sameSide->erase(limit);
+            updateBidAskPrices();
+        }
     } else if (type == MARKET) {
-        // Side side = origOrder->getSide();
-        /* remove id from mkt deque of side */
+        MarketOrder* refOrder = dynamic_cast<MarketOrder*>(origOrder);
+        Side side = refOrder->getSide();
+        deque<MarketOrder*>* orders = (side==BID)?&bidMktQueue:&askMktQueue;
+        for (auto i=orders->begin(); i!=orders->end(); i++)
+            if ((*i)->getId()==id) {
+                delete *i;
+                orders->erase(i);
+                break;
+            }
     }
 }
 
@@ -753,6 +767,16 @@ void LimitOrderBook::processMktQueue(Side side) {
         MarketOrder* topMktOrder = mktQueue->front();
         mktQueue->pop_front();
         process(*topMktOrder, false);
+    }
+}
+
+void LimitOrderBook::processOrder(const Order& order) {
+    OrderType type = order.getType();
+    switch(type) {
+        case LIMIT: process(*dynamic_cast<LimitOrder*>(order.copy())); break;
+        case MARKET: process(*dynamic_cast<MarketOrder*>(order.copy())); break;
+        case CANCEL: process(*dynamic_cast<CancelOrder*>(order.copy())); break;
+        default: return;
     }
 }
 
