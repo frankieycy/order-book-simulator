@@ -2,12 +2,9 @@
 using namespace std;
 using namespace chrono;
 
-int main() {
-    srand(0);
+void runNaive(int n, bool showProcess=false, bool showFinalBook=false) {
     int id = 0;
-    int n = 20;
     LimitOrderBook ob;
-    auto t1 = high_resolution_clock::now();
     for (int i=0; i<n; i++) {
         Side side = (uniformRand()<.5)?BID:ASK;
         int size = (int)uniformRand(5,20);
@@ -21,15 +18,28 @@ int main() {
         else if (u < 0.8) o = new MarketOrder(id++,0,"TEST",side,size);
         else o = new CancelOrder(id++,0,"TEST",ccl);
         ob.processOrder(*o);
-        cout << "submitted: " << o << endl;
-        ob.printBook(0,5,false);
-        cout << "Mkt Bid: " << ob.getBidMktQueue() << endl;
-        cout << "Mkt Ask: " << ob.getAskMktQueue() << endl;
-        cout << endl << endl;
+        if (showProcess) {
+            cout << "submitted: " << o << endl;
+            ob.printBook(0,5,false);
+            cout << "Best Bid/Ask: " << ob.getTopBid() << " " << ob.getTopAsk() << endl;
+            cout << "Mkt Bid: " << ob.getBidMktQueue() << endl;
+            cout << "Mkt Ask: " << ob.getAskMktQueue() << endl;
+            cout << endl << endl;
+        }
     }
-    auto t2 = high_resolution_clock::now();
-    auto t = duration_cast<microseconds>(t2-t1);
-    cout << "processing time per order: " << (float)t.count()/n << "μs" << endl;
-    // ob.printBook(0,5);
+    if (showFinalBook) ob.printBook(0,5);
+}
+
+int main() {
+    srand(0);
+    runNaive(20,true,false);
+    // for (int m=10; m<25; m++) {
+    //     int n = pow(2,m);
+    //     auto t1 = high_resolution_clock::now();
+    //     runNaive(n,false,false);
+    //     auto t2 = high_resolution_clock::now();
+    //     auto t = duration_cast<microseconds>(t2-t1);
+    //     cout << "(m = " << m << ") processing time per order: " << (float)t.count()/n << "μs" << endl;
+    // }
     return 0;
 }

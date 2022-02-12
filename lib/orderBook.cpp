@@ -693,6 +693,8 @@ void LimitOrderBook::process(const LimitOrder& order) {
         if (i == sameSidePrices->end())
             sameSidePrices->insert(find_if(sameSidePrices->begin(), sameSidePrices->end(), c), limit);
     }
+    updateTopBid();
+    updateTopAsk();
     processMktQueue((side==BID)?ASK:BID);
 }
 
@@ -730,6 +732,8 @@ void LimitOrderBook::process(const MarketOrder& order, bool isNew) {
         if (isNew) mktQueue->push_back(updatedOrder);
         else mktQueue->push_front(updatedOrder);
     }
+    updateTopBid();
+    updateTopAsk();
 }
 
 void LimitOrderBook::process(const CancelOrder& order) {
@@ -765,6 +769,8 @@ void LimitOrderBook::process(const CancelOrder& order) {
             }
         }
     }
+    updateTopBid();
+    updateTopAsk();
     /**** Implementation 2 ****/
     // auto i = ordersLog.find(id); // SLOW!
     // if (i == ordersLog.end()) return;

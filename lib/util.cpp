@@ -2,6 +2,7 @@
 #define UTIL_CPP
 #include <iostream>
 #include <sstream>
+#include <cmath>
 #include <chrono>
 #include <string>
 #include <vector>
