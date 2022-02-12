@@ -3,8 +3,9 @@ using namespace std;
 using namespace chrono;
 
 int main() {
+    srand(0);
     int id = 0;
-    int n = 1000000;
+    int n = 20;
     LimitOrderBook ob;
     auto t1 = high_resolution_clock::now();
     for (int i=0; i<n; i++) {
@@ -20,11 +21,11 @@ int main() {
         else if (u < 0.8) o = new MarketOrder(id++,0,"TEST",side,size);
         else o = new CancelOrder(id++,0,"TEST",ccl);
         ob.processOrder(*o);
-        // cout << "submitted: " << o << endl;
-        // ob.printBook(0,5,false);
-        // cout << "Bid Mkt: " << ob.getBidMktQueue() << endl;
-        // cout << "Ask Mkt: " << ob.getAskMktQueue() << endl;
-        // cout << endl << endl;
+        cout << "submitted: " << o << endl;
+        ob.printBook(0,5,false);
+        cout << "Mkt Bid: " << ob.getBidMktQueue() << endl;
+        cout << "Mkt Ask: " << ob.getAskMktQueue() << endl;
+        cout << endl << endl;
     }
     auto t2 = high_resolution_clock::now();
     auto t = duration_cast<microseconds>(t2-t1);
