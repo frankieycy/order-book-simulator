@@ -142,38 +142,42 @@ class LimitOrderBook {
 private:
     string name;
     double topBid, topAsk;
+    int bidTotalDepth, askTotalDepth;
     deque<Trade*> trades;
     deque<double> bidPrices, askPrices;
     deque<MarketOrder*> bidMktQueue, askMktQueue;
     map<int,Order*> ordersLog;
     map<int,double> bidsLog, asksLog;
+    map<double,int> bidDepths, askDepths;
     map<double,deque<LimitOrder*>> bids, asks;
 public:
     /**** constructors ****/
-    LimitOrderBook(){}; ~LimitOrderBook();
+    LimitOrderBook(); ~LimitOrderBook();
     LimitOrderBook(string name);
     LimitOrderBook(const LimitOrderBook& book);
     LimitOrderBook* copy() const;
     /**** accessors ****/
     string getName() const {return name;}
+    int getBidTotalDepth() const {return bidTotalDepth;}
+    int getAskTotalDepth() const {return askTotalDepth;}
     double getTopBid() const {return topBid;}
     double getTopAsk() const {return topAsk;}
-    deque<Trade*> getTrades() const {return trades;}
+    deque<Trade*> getTrades() const;
     deque<double> getBidPrices() const {return bidPrices;}
     deque<double> getAskPrices() const {return askPrices;}
-    deque<MarketOrder*> getBidMktQueue() const {return bidMktQueue;}
-    deque<MarketOrder*> getAskMktQueue() const {return askMktQueue;}
-    map<int,Order*> getOrdersLog() const {return ordersLog;}
+    deque<MarketOrder*> getBidMktQueue() const;
+    deque<MarketOrder*> getAskMktQueue() const;
+    map<int,Order*> getOrdersLog() const;
     map<int,double> getBidsLog() const {return bidsLog;}
     map<int,double> getAsksLog() const {return asksLog;}
-    map<double,deque<LimitOrder*>> getBids() const {return bids;}
-    map<double,deque<LimitOrder*>> getAsks() const {return asks;}
+    map<double,deque<LimitOrder*>> getBids() const;
+    map<double,deque<LimitOrder*>> getAsks() const;
     deque<LimitOrder*> getBidOrders(double price) const;
     deque<LimitOrder*> getAskOrders(double price) const;
-    map<double,int> getBidDepth() const;
-    map<double,int> getAskDepth() const;
-    double getBidDepthAt(double price) const;
-    double getAskDepthAt(double price) const;
+    map<double,int> getBidDepths() const {return bidDepths;}
+    map<double,int> getAskDepths() const {return askDepths;}
+    int getBidDepthAt(double price) const {return (bidDepths.count(price))?bidDepths.at(price):0;}
+    int getAskDepthAt(double price) const {return (askDepths.count(price))?askDepths.at(price):0;}
     string getAsJson() const;
     string read() const;
     void printBook(int bookLevels=0, int tradeLevels=0, bool summarizeDepth=true) const;
@@ -492,6 +496,8 @@ string Trade::read() const {
 
 /******************************************************************************/
 
+LimitOrderBook::LimitOrderBook(): bidTotalDepth(0), askTotalDepth(0), topBid(-1), topAsk(-1) {}
+
 LimitOrderBook::LimitOrderBook(string name): name(name) {}
 
 LimitOrderBook::LimitOrderBook(const LimitOrderBook& book): name(book.name) {
@@ -513,6 +519,44 @@ LimitOrderBook* LimitOrderBook::copy() const {
     return new LimitOrderBook(*this);
 }
 
+deque<Trade*> LimitOrderBook::getTrades() const {
+    deque<Trade*> tradesCopy;
+    for (auto t : trades) tradesCopy.push_back(t->copy());
+    return tradesCopy;
+}
+
+deque<MarketOrder*> LimitOrderBook::getBidMktQueue() const {
+    deque<MarketOrder*> bidMktQueueCopy;
+    for (auto o : bidMktQueue) bidMktQueueCopy.push_back(o->copy());
+    return bidMktQueueCopy;
+}
+
+deque<MarketOrder*> LimitOrderBook::getAskMktQueue() const {
+    deque<MarketOrder*> askMktQueueCopy;
+    for (auto o : askMktQueue) askMktQueueCopy.push_back(o->copy());
+    return askMktQueueCopy;
+}
+
+map<int,Order*> LimitOrderBook::getOrdersLog() const {
+    map<int,Order*> ordersLogCopy;
+    for (auto o : ordersLog) ordersLogCopy[o.first] = o.second->copy();
+    return ordersLogCopy;
+}
+
+map<double,deque<LimitOrder*>> LimitOrderBook::getBids() const {
+    map<double,deque<LimitOrder*>> bidsCopy;
+    for (auto b : bids)
+        for (auto o : b.second) bidsCopy[b.first].push_back(o->copy());
+    return bidsCopy;
+}
+
+map<double,deque<LimitOrder*>> LimitOrderBook::getAsks() const {
+    map<double,deque<LimitOrder*>> asksCopy;
+    for (auto a : asks)
+        for (auto o : a.second) asksCopy[a.first].push_back(o->copy());
+    return asksCopy;
+}
+
 deque<LimitOrder*> LimitOrderBook::getBidOrders(double price) const {
     auto i = bids.find(price);
     if (i != bids.end()) {
@@ -529,40 +573,6 @@ deque<LimitOrder*> LimitOrderBook::getAskOrders(double price) const {
         for (auto o : i->second) orders.push_back(o->copy());
         return orders;
     } else return {};
-}
-
-map<double,int> LimitOrderBook::getBidDepth() const {
-    map<double,int> depth;
-    for (auto b : bids) {
-        int d = 0;
-        for (auto o : b.second) d += o->getSize();
-        depth[b.first] = d;
-    }
-    return depth;
-}
-
-map<double,int> LimitOrderBook::getAskDepth() const {
-    map<double,int> depth;
-    for (auto b : asks) {
-        int d = 0;
-        for (auto o : b.second) d += o->getSize();
-        depth[b.first] = d;
-    }
-    return depth;
-}
-
-double LimitOrderBook::getBidDepthAt(double price) const {
-    int d = 0;
-    auto i = bids.find(price);
-    for (auto o : i->second) d += o->getSize();
-    return d;
-}
-
-double LimitOrderBook::getAskDepthAt(double price) const {
-    int d = 0;
-    auto i = asks.find(price);
-    for (auto o : i->second) d += o->getSize();
-    return d;
 }
 
 string LimitOrderBook::getAsJson() const {
@@ -658,14 +668,19 @@ void LimitOrderBook::process(const LimitOrder& order) {
     if (side == NULL_SIDE) return;
     double limit = order.getPrice();
     int unfilledSize = order.getSize();
+    int* sameSideTotalDepth = (side==BID)?&bidTotalDepth:&askTotalDepth;
+    int* oppSideTotalDepth = (side==BID)?&askTotalDepth:&bidTotalDepth;
     deque<double>* sameSidePrices = (side==BID)?&bidPrices:&askPrices;
     deque<double>* oppSidePrices = (side==BID)?&askPrices:&bidPrices;
+    map<double,int>* sameSideDepths = (side==BID)?&bidDepths:&askDepths;
+    map<double,int>* oppSideDepths = (side==BID)?&askDepths:&bidDepths;
     map<double,deque<LimitOrder*>>* sameSide = (side==BID)?&bids:&asks;
     map<double,deque<LimitOrder*>>* oppSide = (side==BID)?&asks:&bids;
     map<int,double>* sameSideLOLog = (side==BID)?&bidsLog:&asksLog;
     map<int,double>* oppSideLOLog = (side==BID)?&asksLog:&bidsLog;
     ordersLog[id] = order.copy();
     while (unfilledSize && oppSidePrices->size() && match(side, limit, oppSidePrices->front())) {
+        int* oppSideDepthAtPrice = &oppSideDepths->at(oppSidePrices->front());
         deque<LimitOrder*>* orders = &oppSide->at(oppSidePrices->front());
         while (unfilledSize && orders->size()) {
             int matchedSize = min(unfilledSize, orders->front()->getSize());
@@ -673,6 +688,8 @@ void LimitOrderBook::process(const LimitOrder& order) {
             trades.push_back(trade);
             unfilledSize -= matchedSize;
             orders->front()->reduceSize(matchedSize);
+            *oppSideDepthAtPrice -= matchedSize;
+            *oppSideTotalDepth -= matchedSize;
             if (!orders->front()->getSize()) {
                 oppSideLOLog->erase(orders->front()->getId());
                 orders->pop_front();
@@ -680,6 +697,7 @@ void LimitOrderBook::process(const LimitOrder& order) {
         }
         if (!orders->size()) {
             oppSide->erase(oppSidePrices->front());
+            oppSideDepths->erase(oppSidePrices->front());
             oppSidePrices->pop_front();
         }
     }
@@ -688,6 +706,8 @@ void LimitOrderBook::process(const LimitOrder& order) {
         updatedOrder->setSize(unfilledSize);
         (*sameSide)[limit].push_back(updatedOrder);
         (*sameSideLOLog)[id] = limit;
+        (*sameSideDepths)[limit] += unfilledSize;
+        *sameSideTotalDepth += unfilledSize;
         auto i = find(sameSidePrices->begin(), sameSidePrices->end(), limit);
         auto c = [side,limit](double p){return (side==BID)?limit>p:limit<p;};
         if (i == sameSidePrices->end())
@@ -703,11 +723,14 @@ void LimitOrderBook::process(const MarketOrder& order, bool isNew) {
     Side side = order.getSide();
     if (side == NULL_SIDE) return;
     int unfilledSize = order.getSize();
+    int* oppSideTotalDepth = (side==BID)?&askTotalDepth:&bidTotalDepth;
     deque<double>* oppSidePrices = (side==BID)?&askPrices:&bidPrices;
+    map<double,int>* oppSideDepths = (side==BID)?&askDepths:&bidDepths;
     map<double,deque<LimitOrder*>>* oppSide = (side==BID)?&asks:&bids;
     map<int,double>* oppSideLOLog = (side==BID)?&asksLog:&bidsLog;
     ordersLog[id] = order.copy();
     while (unfilledSize && oppSidePrices->size()) {
+        int* oppSideDepthAtPrice = &oppSideDepths->at(oppSidePrices->front());
         deque<LimitOrder*>* orders = &oppSide->at(oppSidePrices->front());
         while (unfilledSize && orders->size()) {
             int matchedSize = min(unfilledSize, orders->front()->getSize());
@@ -715,6 +738,8 @@ void LimitOrderBook::process(const MarketOrder& order, bool isNew) {
             trades.push_back(trade);
             unfilledSize -= matchedSize;
             orders->front()->reduceSize(matchedSize);
+            *oppSideDepthAtPrice -= matchedSize;
+            *oppSideTotalDepth -= matchedSize;
             if (!orders->front()->getSize()) {
                 oppSideLOLog->erase(orders->front()->getId());
                 orders->pop_front();
@@ -722,6 +747,7 @@ void LimitOrderBook::process(const MarketOrder& order, bool isNew) {
         }
         if (!orders->size()) {
             oppSide->erase(oppSidePrices->front());
+            oppSideDepths->erase(oppSidePrices->front());
             oppSidePrices->pop_front();
         }
     }
@@ -743,7 +769,9 @@ void LimitOrderBook::process(const CancelOrder& order) {
     bool onAskBook = asksLog.find(id)!=asksLog.end();
     if (onBidBook || onAskBook) {
         Side side = (onBidBook)?BID:ASK;
+        int* sameSideTotalDepth = (side==BID)?&bidTotalDepth:&askTotalDepth;
         deque<double>* sameSidePrices = (side==BID)?&bidPrices:&askPrices;
+        map<double,int>* sameSideDepths = (side==BID)?&bidDepths:&askDepths;
         map<double,deque<LimitOrder*>>* sameSide = (side==BID)?&bids:&asks;
         map<int,double>* sameSideLOLog = (side==BID)?&bidsLog:&asksLog;
         double limit = sameSideLOLog->at(id);
@@ -753,16 +781,19 @@ void LimitOrderBook::process(const CancelOrder& order) {
             delete *i;
             orders->erase(i);
             sameSideLOLog->erase(id);
+            (*sameSideDepths)[limit] -= (*i)->getSize();
+            *sameSideTotalDepth -= (*i)->getSize();
         }
         if (!orders->size()) {
             sameSide->erase(limit);
+            sameSideDepths->erase(limit);
             auto i = find(sameSidePrices->begin(), sameSidePrices->end(), limit);
             if (i != sameSidePrices->end()) sameSidePrices->erase(i);
         }
     } else {
         for (auto orders : {&bidMktQueue, &askMktQueue}) {
             auto i = lower_bound(orders->begin(), orders->end(), id, [](MarketOrder* o, int id){return o->getId()<id;});
-            if (i != orders->end()) {
+            if (i != orders->end() && (*i)->getId()==id) {
                 delete *i;
                 orders->erase(i);
                 break;
@@ -811,6 +842,8 @@ void LimitOrderBook::process(const CancelOrder& order) {
     //             break;
     //         }
     // }
+    // updateTopBid();
+    // updateTopAsk();
 }
 
 void LimitOrderBook::process(const ModifyOrder& order) {
