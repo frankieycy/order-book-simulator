@@ -496,9 +496,9 @@ string Trade::read() const {
 
 /******************************************************************************/
 
-LimitOrderBook::LimitOrderBook(): bidTotalDepth(0), askTotalDepth(0), topBid(-1), topAsk(-1) {}
+LimitOrderBook::LimitOrderBook(): bidTotalDepth(0), askTotalDepth(0), topBid(0), topAsk(0) {}
 
-LimitOrderBook::LimitOrderBook(string name): name(name) {}
+LimitOrderBook::LimitOrderBook(string name): bidTotalDepth(0), askTotalDepth(0), topBid(0), topAsk(0), name(name) {}
 
 LimitOrderBook::LimitOrderBook(const LimitOrderBook& book): name(book.name) {
     //
@@ -633,12 +633,12 @@ void LimitOrderBook::printBook(int bookLevels, int tradeLevels, bool summarizeDe
 }
 
 double LimitOrderBook::updateTopBid() {
-    topBid = (bidPrices.size()>0)?bidPrices[0]:-1;
+    topBid = (bidPrices.size()>0)?bidPrices[0]:0;
     return topBid;
 }
 
 double LimitOrderBook::updateTopAsk() {
-    topAsk = (askPrices.size()>0)?askPrices[0]:-1;
+    topAsk = (askPrices.size()>0)?askPrices[0]:0;
     return topAsk;
 }
 
