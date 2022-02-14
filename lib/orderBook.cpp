@@ -178,6 +178,10 @@ public:
     map<double,int> getAskDepths() const {return askDepths;}
     int getBidDepthAt(double price) const {return (bidDepths.count(price))?bidDepths.at(price):0;}
     int getAskDepthAt(double price) const {return (askDepths.count(price))?askDepths.at(price):0;}
+    int getBidDepthBetween(double price0, double price1) const;
+    int getAskDepthBetween(double price0, double price1) const;
+    LimitOrder* peekBidOrderAt(double price) const;
+    LimitOrder* peekAskOrderAt(double price) const;
     string getAsJson() const;
     string read() const;
     void printBook(int bookLevels=0, int tradeLevels=0, bool summarizeDepth=true) const;
@@ -225,7 +229,7 @@ ostream& operator<<(ostream& out, const OrderType& type) {
 }
 
 ostream& operator<<(ostream& out, Order* const order) {
-    out << order->getAsJson();
+    if (order != 0) out << order->getAsJson();
     return out;
 }
 
@@ -235,7 +239,7 @@ ostream& operator<<(ostream& out, const Order& order) {
 }
 
 ostream& operator<<(ostream& out, Trade* const trade) {
-    out << trade->getAsJson();
+    if (trade != 0) out << trade->getAsJson();
     return out;
 }
 
@@ -496,11 +500,11 @@ string Trade::read() const {
 
 /******************************************************************************/
 
-LimitOrderBook::LimitOrderBook(): bidTotalDepth(0), askTotalDepth(0), topBid(0), topAsk(0) {}
+LimitOrderBook::LimitOrderBook(): topBid(0), topAsk(0), bidTotalDepth(0), askTotalDepth(0) {}
 
-LimitOrderBook::LimitOrderBook(string name): bidTotalDepth(0), askTotalDepth(0), topBid(0), topAsk(0), name(name) {}
+LimitOrderBook::LimitOrderBook(string name): name(name), topBid(0), topAsk(0), bidTotalDepth(0), askTotalDepth(0) {}
 
-LimitOrderBook::LimitOrderBook(const LimitOrderBook& book): name(book.name) {
+LimitOrderBook::LimitOrderBook(const LimitOrderBook& book): name(book.name), topBid(book.topBid), topAsk(book.topAsk), bidTotalDepth(book.bidTotalDepth), askTotalDepth(book.askTotalDepth), bidPrices(book.bidPrices), askPrices(book.askPrices), bidsLog(book.bidsLog), asksLog(book.asksLog), bidDepths(book.bidDepths), askDepths(book.askDepths) {
     //
 }
 
@@ -573,6 +577,26 @@ deque<LimitOrder*> LimitOrderBook::getAskOrders(double price) const {
         for (auto o : i->second) orders.push_back(o->copy());
         return orders;
     } else return {};
+}
+
+int LimitOrderBook::getBidDepthBetween(double price0, double price1) const{
+    return 0;
+}
+
+int LimitOrderBook::getAskDepthBetween(double price0, double price1) const{
+    return 0;
+}
+
+LimitOrder* LimitOrderBook::peekBidOrderAt(double price) const {
+    auto i = bids.find(price);
+    if (i != bids.end()) return i->second.front()->copy();
+    else return 0;
+}
+
+LimitOrder* LimitOrderBook::peekAskOrderAt(double price) const {
+    auto i = asks.find(price);
+    if (i != asks.end()) return i->second.front()->copy();
+    else return 0;
 }
 
 string LimitOrderBook::getAsJson() const {

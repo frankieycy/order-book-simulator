@@ -22,8 +22,8 @@ void runNaive(int n, bool showProcess=false, bool showFinalBook=false) {
             cout << "submitted: " << o << endl;
             ob.printBook(0,5,false);
             cout << "Top: "
-                 << "Bid " << ob.getBidTotalDepth() << " @ $" << ob.getTopBid() << " "
-                 << "Ask " << ob.getAskTotalDepth() << " @ $" << ob.getTopAsk() << endl;
+                 << "Bid " << ob.getBidDepthAt(ob.getTopBid()) << " @ $" << ob.getTopBid() << " "
+                 << "Ask " << ob.getAskDepthAt(ob.getTopAsk()) << " @ $" << ob.getTopAsk() << endl;
             cout << "Mkt Bid: " << ob.getBidMktQueue() << endl;
             cout << "Mkt Ask: " << ob.getAskMktQueue() << endl;
             cout << endl << endl;

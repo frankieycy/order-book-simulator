@@ -3,6 +3,8 @@
 #include <iostream>
 #include <sstream>
 #include <cmath>
+#include <numeric>
+#include <algorithm>
 #include <chrono>
 #include <string>
 #include <vector>
@@ -12,6 +14,7 @@ using namespace std;
 
 inline void seperator(int length=20){cout << string(length,'-') << endl;}
 inline double uniformRand(double min=0, double max=1){return min+(max-min)*rand()/RAND_MAX;}
+inline int uniformIntRand(double min, double max){return floor(uniformRand(min,max+1));}
 
 template <class S, class T>
 S& operator<<(S& out, const vector<T>& vec){
