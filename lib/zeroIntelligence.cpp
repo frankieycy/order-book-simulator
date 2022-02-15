@@ -49,7 +49,7 @@ public:
     void initOrderBook(vector<int> sizes={});
     void sendLimitOrder(Side side);
     void sendMarketOrder(Side side);
-    void sendCancelOrder(Side side);
+    void sendCancelOrder(Side side, int depthBtw=0);
     void generateOrder();
     void simulate();
 };
@@ -139,14 +139,14 @@ void ZeroIntelligence::sendMarketOrder(Side side) {
     ob.process(MarketOrder(id++,time++,"ZI",side,1));
 }
 
-void ZeroIntelligence::sendCancelOrder(Side side) {
+void ZeroIntelligence::sendCancelOrder(Side side, int depthBtw) {
     int idRef = -1;
     int cumDepth = 0;
     int L = limPriceBnd;
     double limit;
     if (side == BID) {
         int a = ob.getTopAsk();
-        int threshold = uniformIntRand(1,ob.getBidDepthBetween(a-L,a-1));
+        int threshold = uniformIntRand(1,(depthBtw)?depthBtw:ob.getBidDepthBetween(a-L,a-1));
         deque<double>* bidPrices = ob.getBidPricesPtr();
         map<double,int>* bidDepths = ob.getBidDepthsPtr();
         for (auto p : *bidPrices) {
@@ -158,7 +158,7 @@ void ZeroIntelligence::sendCancelOrder(Side side) {
         idRef = ob.peekBidOrderAt(limit)->getId();
     } else if (side == ASK) {
         int b = ob.getTopBid();
-        int threshold = uniformIntRand(1,ob.getAskDepthBetween(b+1,b+L));
+        int threshold = uniformIntRand(1,(depthBtw)?depthBtw:ob.getAskDepthBetween(b+1,b+L));
         deque<double>* askPrices = ob.getAskPricesPtr();
         map<double,int>* askDepths = ob.getAskDepthsPtr();
         for (auto p : *askPrices) {
@@ -177,14 +177,16 @@ void ZeroIntelligence::generateOrder() {
     int a = ob.getTopAsk();
     int b = ob.getTopBid();
     int L = limPriceBnd;
+    int bidDepthBtw = ob.getBidDepthBetween(a-L,a-1);
+    int askDepthBtw = ob.getAskDepthBetween(b+1,b+L);
     double p = uniformRand();
     vector<double> prob{
         limPriceBnd*limOrderArvRate,
         limPriceBnd*limOrderArvRate,
         mktOrderArvRate/2,
         mktOrderArvRate/2,
-        ob.getBidDepthBetween(a-L,a-1)*cclOrderArvRate,
-        ob.getAskDepthBetween(b+1,b+L)*cclOrderArvRate,
+        bidDepthBtw*cclOrderArvRate,
+        askDepthBtw*cclOrderArvRate,
     };
     double totalProb = accumulate(prob.begin(), prob.end(), 0);
     transform(prob.begin(), prob.end(), prob.begin(), [totalProb](double& p){return p/totalProb;});
@@ -197,8 +199,8 @@ void ZeroIntelligence::generateOrder() {
         case 1: sendLimitOrder(ASK); break;
         case 2: sendMarketOrder(BID); break;
         case 3: sendMarketOrder(ASK); break;
-        case 4: sendCancelOrder(BID); break;
-        case 5: sendCancelOrder(ASK); break;
+        case 4: sendCancelOrder(BID,bidDepthBtw); break;
+        case 5: sendCancelOrder(ASK,askDepthBtw); break;
         default: return;
     }
 }

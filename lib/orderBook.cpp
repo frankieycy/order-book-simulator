@@ -586,11 +586,19 @@ deque<LimitOrder*> LimitOrderBook::getAskOrders(double price) const {
 }
 
 int LimitOrderBook::getBidDepthBetween(double price0, double price1) const{
-    return 0;
+    int cumDepth = 0;
+    auto i0 = lower_bound(bidPrices.begin(), bidPrices.end(), price1, greater<double>());
+    auto i1 = upper_bound(bidPrices.begin(), bidPrices.end(), price0, greater<double>());
+    for (auto i=i0; i!=i1; i++) cumDepth += bidDepths.at(*i);
+    return cumDepth;
 }
 
 int LimitOrderBook::getAskDepthBetween(double price0, double price1) const{
-    return 0;
+    int cumDepth = 0;
+    auto i0 = lower_bound(askPrices.begin(), askPrices.end(), price0);
+    auto i1 = upper_bound(askPrices.begin(), askPrices.end(), price1);
+    for (auto i=i0; i!=i1; i++) cumDepth += askDepths.at(*i);
+    return cumDepth;
 }
 
 LimitOrder* LimitOrderBook::peekBidOrderAt(double price) const {
@@ -814,6 +822,7 @@ void LimitOrderBook::process(const MarketOrder& order, bool isNew) {
 
 void LimitOrderBook::process(const CancelOrder& order) {
     int id = order.getIdRef();
+    ordersLog[id] = order.copy();
     /**** Implementation 1 ****/
     bool onBidBook = bidsLog.find(id)!=bidsLog.end();
     bool onAskBook = asksLog.find(id)!=asksLog.end();
