@@ -5,6 +5,8 @@
 #include "util.cpp"
 using namespace std;
 
+/**** class declarations ******************************************************/
+
 class Order {
 private:
     int id;
@@ -210,55 +212,13 @@ private:
     vector<LimitOrderBook*> books;
 };
 
-/******************************************************************************/
-
-ostream& operator<<(ostream& out, const Side& side) {
-    switch(side) {
-        case BID:       out << "BID"; break;
-        case ASK:       out << "ASK"; break;
-        case NULL_SIDE: out << "NULL"; break;
-        default:        out << "NULL";
-    }
-    return out;
-}
-
-ostream& operator<<(ostream& out, const OrderType& type) {
-    switch(type) {
-        case LIMIT:    out << "LIMIT"; break;
-        case MARKET:   out << "MARKET"; break;
-        case CANCEL:   out << "CANCEL"; break;
-        case MODIFY:   out << "MODIFY"; break;
-        case NULL_ORD: out << "NULL"; break;
-        default:       out << "NULL";
-    }
-    return out;
-}
-
-ostream& operator<<(ostream& out, Order* const order) {
-    if (order != 0) out << order->getAsJson();
-    return out;
-}
-
-ostream& operator<<(ostream& out, const Order& order) {
-    out << order.getAsJson();
-    return out;
-}
-
-ostream& operator<<(ostream& out, Trade* const trade) {
-    if (trade != 0) out << trade->getAsJson();
-    return out;
-}
-
-ostream& operator<<(ostream& out, const Trade& trade) {
-    out << trade.getAsJson();
-    return out;
-}
+/**** class functions *********************************************************/
 
 bool match(Side side, double limit, double price) {
     return (side==BID)?(price<=limit):((side==ASK)?(price>=limit):false);
 }
 
-/******************************************************************************/
+//### Order class ##############################################################
 
 Order::Order(const Order& order): id(order.id), time(order.time), name(order.name), type(order.type) {}
 
@@ -305,7 +265,7 @@ OrderType Order::setType(OrderType type) {
     return this->type;
 }
 
-/******************************************************************************/
+//### LimitOrder class #########################################################
 
 LimitOrder::LimitOrder(const LimitOrder& order): Order(order), side(order.side), size(order.size), price(order.price) {}
 
@@ -355,7 +315,7 @@ double LimitOrder::setPrice(double price) {
     return this->price;
 }
 
-/******************************************************************************/
+//### MarketOrder class ########################################################
 
 MarketOrder::MarketOrder(const MarketOrder& order): Order(order), side(order.side), size(order.size) {}
 
@@ -394,7 +354,7 @@ Side MarketOrder::setSide(Side side) {
     return this->side;
 }
 
-/******************************************************************************/
+//### CancelOrder class ########################################################
 
 CancelOrder::CancelOrder(const CancelOrder& order): Order(order), idRef(order.idRef) {}
 
@@ -427,7 +387,7 @@ int CancelOrder::setIdRef(int idRef) {
     return this->idRef;
 }
 
-/******************************************************************************/
+//### ModifyOrder class ########################################################
 
 ModifyOrder::ModifyOrder(const ModifyOrder& order): Order(order), idRef(order.idRef), newOrder(order.copy()) {}
 
@@ -471,7 +431,7 @@ Order* ModifyOrder::setNewOrder(const Order& newOrder) {
     return this->newOrder;
 }
 
-/******************************************************************************/
+//### Trade class ##############################################################
 
 Trade::Trade(const Trade& trade): side(trade.side), size(trade.size), price(trade.price), bookOrder(trade.bookOrder->copy()), matchOrder(trade.matchOrder->copy()) {}
 
@@ -504,7 +464,7 @@ string Trade::read() const {
     return oss.str();
 }
 
-/******************************************************************************/
+//### LimitOrderBook class #####################################################
 
 LimitOrderBook::LimitOrderBook(): topBid(0), topAsk(0), bidTotalDepth(0), askTotalDepth(0) {}
 
@@ -930,6 +890,50 @@ void LimitOrderBook::processOrder(const Order& order) {
         case CANCEL: process(*dynamic_cast<CancelOrder*>(order.copy())); break;
         default: return;
     }
+}
+
+//### operators ################################################################
+
+ostream& operator<<(ostream& out, const Side& side) {
+    switch(side) {
+        case BID:       out << "BID"; break;
+        case ASK:       out << "ASK"; break;
+        case NULL_SIDE: out << "NULL"; break;
+        default:        out << "NULL";
+    }
+    return out;
+}
+
+ostream& operator<<(ostream& out, const OrderType& type) {
+    switch(type) {
+        case LIMIT:    out << "LIMIT"; break;
+        case MARKET:   out << "MARKET"; break;
+        case CANCEL:   out << "CANCEL"; break;
+        case MODIFY:   out << "MODIFY"; break;
+        case NULL_ORD: out << "NULL"; break;
+        default:       out << "NULL";
+    }
+    return out;
+}
+
+ostream& operator<<(ostream& out, Order* const order) {
+    if (order != 0) out << order->getAsJson();
+    return out;
+}
+
+ostream& operator<<(ostream& out, const Order& order) {
+    out << order.getAsJson();
+    return out;
+}
+
+ostream& operator<<(ostream& out, Trade* const trade) {
+    if (trade != 0) out << trade->getAsJson();
+    return out;
+}
+
+ostream& operator<<(ostream& out, const Trade& trade) {
+    out << trade.getAsJson();
+    return out;
 }
 
 #endif

@@ -12,8 +12,10 @@ void runNaive(int n, bool showProcess=false, bool showFinalBook=false) {
         double u = uniformRand();
         double price = (int)((side==BID)?uniformRand(70,105):uniformRand(95,130));
         Order* o;
+        /**** Limit & Market Order ********************************************/
         // if (u < .6) o = new LimitOrder(id++,0,"TEST",side,size,price);
         // else o = new MarketOrder(id++,0,"TEST",side,size);
+        /**** Limit, Market & Cancel Order ************************************/
         if (u<0.6) o = new LimitOrder(id++,0,"TEST",side,size,price);
         else if (u<0.8) o = new MarketOrder(id++,0,"TEST",side,size);
         else o = new CancelOrder(id++,0,"TEST",ccl);
@@ -34,13 +36,14 @@ void runNaive(int n, bool showProcess=false, bool showFinalBook=false) {
 
 int main() {
     srand(0);
+    /**** single runNaive *****************************************************/
     int n = 100;
     auto t1 = high_resolution_clock::now();
     runNaive(n,true,true);
     auto t2 = high_resolution_clock::now();
     auto t = duration_cast<microseconds>(t2-t1);
     cout << "processing time per order: " << (float)t.count()/n << "μs" << endl;
-    /**** speed test ****/
+    /**** speed test **********************************************************/
     // for (int m=10; m<25; m++) {
     //     int n = pow(2,m);
     //     auto t1 = high_resolution_clock::now();

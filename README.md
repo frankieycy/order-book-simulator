@@ -6,7 +6,8 @@
 ## To-Do List (2022 Spring)
 
 * ok, efficient proc func for cancel orders
+* ok, zero-intelligence simulation
+* basic order flow visualization in Python
 * order flow messaging, NASDAQ format
-* zero-intelligence simulation
-* analytic library
-* last, organize header files
+* order flow analytic library
+* last, organize header files & comments
