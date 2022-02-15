@@ -5,6 +5,10 @@
 #include "util.cpp"
 using namespace std;
 
+/**** global variables ********************************************************/
+
+int TRADES_CLOCK = 0; // clock for trades log
+
 /**** class declarations ******************************************************/
 
 class Order {
@@ -120,6 +124,7 @@ public:
 
 class Trade {
 private:
+    int time;
     Side side;
     int size;
     double price;
@@ -128,7 +133,7 @@ private:
 public:
     /**** constructors ****/
     Trade(){}; ~Trade();
-    Trade(Side side, int size, double price,
+    Trade(int time, Side side, int size, double price,
         const Order& bookOrder, const Order& matchOrder);
     Trade(const Trade& trade);
     Trade* copy() const;
@@ -218,12 +223,66 @@ private:
     vector<LimitOrderBook*> books;
 };
 
-/**** class functions *********************************************************/
+/**** operators ***************************************************************/
+
+ostream& operator<<(ostream& out, const Side& side) {
+    switch(side) {
+        case BID:       out << "BID"; break;
+        case ASK:       out << "ASK"; break;
+        case NULL_SIDE: out << "NULL"; break;
+        default:        out << "NULL";
+    }
+    return out;
+}
+
+ostream& operator<<(ostream& out, const OrderType& type) {
+    switch(type) {
+        case LIMIT:    out << "LIMIT"; break;
+        case MARKET:   out << "MARKET"; break;
+        case CANCEL:   out << "CANCEL"; break;
+        case MODIFY:   out << "MODIFY"; break;
+        case NULL_ORD: out << "NULL"; break;
+        default:       out << "NULL";
+    }
+    return out;
+}
+
+ostream& operator<<(ostream& out, Order* const order) {
+    if (order != 0) out << order->getAsJson();
+    return out;
+}
+
+ostream& operator<<(ostream& out, const Order& order) {
+    out << order.getAsJson();
+    return out;
+}
+
+ostream& operator<<(ostream& out, Trade* const trade) {
+    if (trade != 0) out << trade->getAsJson();
+    return out;
+}
+
+ostream& operator<<(ostream& out, const Trade& trade) {
+    out << trade.getAsJson();
+    return out;
+}
+
+/**** helper functions ********************************************************/
 
 bool match(Side side, double limit, double price) {
     return (side==BID)?(price<=limit):((side==ASK)?(price>=limit):false);
 }
 
+int getTradesClock() {
+    return TRADES_CLOCK;
+}
+
+int setTradesClock(int time) {
+    TRADES_CLOCK = time;
+    return TRADES_CLOCK;
+}
+
+/**** class functions *********************************************************/
 //### Order class ##############################################################
 
 Order::Order(int id, int time, string name, OrderType type): id(id), time(time), name(name), type(type) {}
@@ -439,9 +498,9 @@ Order* ModifyOrder::setNewOrder(const Order& newOrder) {
 
 //### Trade class ##############################################################
 
-Trade::Trade(Side side, int size, double price, const Order& bookOrder, const Order& matchOrder): side(side), size(size), price(price), bookOrder(bookOrder.copy()), matchOrder(matchOrder.copy()) {}
+Trade::Trade(int time, Side side, int size, double price, const Order& bookOrder, const Order& matchOrder): time(time), side(side), size(size), price(price), bookOrder(bookOrder.copy()), matchOrder(matchOrder.copy()) {}
 
-Trade::Trade(const Trade& trade): side(trade.side), size(trade.size), price(trade.price), bookOrder(trade.bookOrder->copy()), matchOrder(trade.matchOrder->copy()) {}
+Trade::Trade(const Trade& trade): time(trade.time), side(trade.side), size(trade.size), price(trade.price), bookOrder(trade.bookOrder->copy()), matchOrder(trade.matchOrder->copy()) {}
 
 Trade::~Trade() {
     delete bookOrder;
@@ -461,6 +520,7 @@ string Trade::read() const {
 string Trade::getAsJson() const {
     ostringstream oss;
     oss << "{" <<
+    "\"time\":"       << time                    << "," <<
     "\"side\":\""     << side                    << "\"," <<
     "\"size\":"       << size                    << "," <<
     "\"price\":"      << price                   << "," <<
@@ -671,7 +731,7 @@ void LimitOrderBook::process(const LimitOrder& order) {
         deque<LimitOrder*>* orders = &oppSide->at(oppSidePrices->front());
         while (unfilledSize && orders->size()) {
             int matchedSize = min(unfilledSize, orders->front()->getSize());
-            Trade* trade = new Trade(side, matchedSize, orders->front()->getPrice(), *orders->front(), order);
+            Trade* trade = new Trade(getTradesClock(), side, matchedSize, orders->front()->getPrice(), *orders->front(), order);
             trades.push_back(trade);
             unfilledSize -= matchedSize;
             orders->front()->reduceSize(matchedSize);
@@ -721,7 +781,7 @@ void LimitOrderBook::process(const MarketOrder& order, bool isNew) {
         deque<LimitOrder*>* orders = &oppSide->at(oppSidePrices->front());
         while (unfilledSize && orders->size()) {
             int matchedSize = min(unfilledSize, orders->front()->getSize());
-            Trade* trade = new Trade(side, matchedSize, orders->front()->getPrice(), *orders->front(), order);
+            Trade* trade = new Trade(getTradesClock(), side, matchedSize, orders->front()->getPrice(), *orders->front(), order);
             trades.push_back(trade);
             unfilledSize -= matchedSize;
             orders->front()->reduceSize(matchedSize);
@@ -859,50 +919,6 @@ void LimitOrderBook::processOrder(const Order& order) {
         case CANCEL: process(*dynamic_cast<CancelOrder*>(order.copy())); break;
         default: return;
     }
-}
-
-//### operators ################################################################
-
-ostream& operator<<(ostream& out, const Side& side) {
-    switch(side) {
-        case BID:       out << "BID"; break;
-        case ASK:       out << "ASK"; break;
-        case NULL_SIDE: out << "NULL"; break;
-        default:        out << "NULL";
-    }
-    return out;
-}
-
-ostream& operator<<(ostream& out, const OrderType& type) {
-    switch(type) {
-        case LIMIT:    out << "LIMIT"; break;
-        case MARKET:   out << "MARKET"; break;
-        case CANCEL:   out << "CANCEL"; break;
-        case MODIFY:   out << "MODIFY"; break;
-        case NULL_ORD: out << "NULL"; break;
-        default:       out << "NULL";
-    }
-    return out;
-}
-
-ostream& operator<<(ostream& out, Order* const order) {
-    if (order != 0) out << order->getAsJson();
-    return out;
-}
-
-ostream& operator<<(ostream& out, const Order& order) {
-    out << order.getAsJson();
-    return out;
-}
-
-ostream& operator<<(ostream& out, Trade* const trade) {
-    if (trade != 0) out << trade->getAsJson();
-    return out;
-}
-
-ostream& operator<<(ostream& out, const Trade& trade) {
-    out << trade.getAsJson();
-    return out;
 }
 
 void LimitOrderBook::printBook(int bookLevels, int tradeLevels, bool summarizeDepth) const {

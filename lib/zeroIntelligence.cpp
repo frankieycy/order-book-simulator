@@ -73,6 +73,8 @@ public:
         bool summarizeDepth=true) const;
     void printTradesToJson(string name) const;
     void printDepthsLogToJson(string name) const;
+    void printTradesToCsv(string name) const;
+    void printDepthsLogToCsv(string name) const;
 };
 
 /**** class functions *********************************************************/
@@ -129,6 +131,7 @@ double ZeroIntelligence::setCclOrderArvRate(double arvRate) {
 }
 
 void ZeroIntelligence::initOrderBook(vector<int> sizes) {
+    setTradesClock(0);
     if (!sizes.size()) sizes = {1,2,2,3,3,4,4,5};
     int limit = 1, idx = 0;
     while (limit <= priceBnd) {
@@ -228,6 +231,7 @@ void ZeroIntelligence::generateOrder() {
 void ZeroIntelligence::simulate() {
     while (numOrderSent < numOrder) {
         generateOrder();
+        setTradesClock(time);
         numOrderSent++;
         snapBook();
     }
@@ -249,6 +253,14 @@ void ZeroIntelligence::printTradesToJson(string name) const {
 }
 
 void ZeroIntelligence::printDepthsLogToJson(string name) const {
+    // TO-DO
+}
+
+void ZeroIntelligence::printTradesToCsv(string name) const {
+    // TO-DO
+}
+
+void ZeroIntelligence::printDepthsLogToCsv(string name) const {
     // TO-DO
 }
 
