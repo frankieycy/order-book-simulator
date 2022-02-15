@@ -2,6 +2,7 @@
 #define UTIL_CPP
 #include <iostream>
 #include <sstream>
+#include <fstream>
 #include <cmath>
 #include <numeric>
 #include <algorithm>

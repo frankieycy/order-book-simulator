@@ -8,7 +8,7 @@ int main() {
     int L       = 30;
     int LL      = 1000;
     int snpInt  = 1;
-    int snpLvl  = 20;
+    int snpLvl  = 5;
     double lda  = 1;
     double mu   = 50;
     double nu   = 0.2;
@@ -21,5 +21,7 @@ int main() {
     zi.printBook(30,10);
     auto t = duration_cast<microseconds>(t2-t1);
     cout << "processing time per order: " << (float)t.count()/n << "μs" << endl;
+    zi.printTradesToCsv("test_trades.csv");
+    zi.printDepthsLogToCsv("test_depths.csv");
     return 0;
 }

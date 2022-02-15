@@ -138,6 +138,11 @@ public:
     Trade(const Trade& trade);
     Trade* copy() const;
     /**** accessors ****/
+    int getTime() const {return time;}
+    int getId() const {return bookOrder->getId();}
+    int getSize() const {return size;}
+    double getPrice() const {return price;}
+    Side getSide() const {return side;}
     string read() const;
     string getAsJson() const;
     /**** operators ****/

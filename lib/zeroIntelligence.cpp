@@ -71,10 +71,10 @@ public:
     void snapBook();
     void printBook(int bookLevels=0, int tradeLevels=0,
         bool summarizeDepth=true) const;
-    void printTradesToJson(string name) const;
-    void printDepthsLogToJson(string name) const;
-    void printTradesToCsv(string name) const;
-    void printDepthsLogToCsv(string name) const;
+    void printTradesToJson(string filename);
+    void printDepthsLogToJson(string filename);
+    void printTradesToCsv(string filename);
+    void printDepthsLogToCsv(string filename);
 };
 
 /**** class functions *********************************************************/
@@ -248,20 +248,48 @@ void ZeroIntelligence::printBook(int bookLevels, int tradeLevels, bool summarize
     ob.printBook(bookLevels, tradeLevels, summarizeDepth);
 }
 
-void ZeroIntelligence::printTradesToJson(string name) const {
-    // TO-DO
+void ZeroIntelligence::printTradesToJson(string filename) {
+    ofstream f; f.open(filename);
+    f << *ob.getTradesPtr() << endl;
+    f.close();
 }
 
-void ZeroIntelligence::printDepthsLogToJson(string name) const {
-    // TO-DO
+void ZeroIntelligence::printDepthsLogToJson(string filename) {
+    ofstream f; f.open(filename);
+    f << "{\"BID\":" << bidDepthsLog << ",\"ASK\":" << askDepthsLog << "}" << endl;
+    f.close();
 }
 
-void ZeroIntelligence::printTradesToCsv(string name) const {
-    // TO-DO
+void ZeroIntelligence::printTradesToCsv(string filename) {
+    deque<Trade*> trades = *ob.getTradesPtr();
+    ofstream f; f.open(filename);
+    f << "TIME,ID,SIZE,PRICE,DIRECTION" << endl;
+    for (auto t : trades) {
+        int time      = t->getTime();
+        int id        = t->getId(); // bookOrder (LIM)
+        int size      = t->getSize();
+        int price     = t->getPrice();
+        int direction = (t->getSide()==BID)?1:-1; // matchOrder (MKT)
+        f << time << "," << id << "," << size << "," << price << "," << direction << endl;
+    }
+    f.close();
 }
 
-void ZeroIntelligence::printDepthsLogToCsv(string name) const {
-    // TO-DO
+void ZeroIntelligence::printDepthsLogToCsv(string filename) {
+    ofstream f; f.open(filename);
+    f << "TIME";
+    for (int i=1; i<=snapBookLevels; i++) f << ",BID" << i << "_PRICE" << ",BID" << i << "_SIZE";
+    for (int i=1; i<=snapBookLevels; i++) f << ",ASK" << i << "_PRICE" << ",ASK" << i << "_SIZE";
+    f << endl;
+    for (int t=0; t<=time; t+=snapInterval) {
+        map<double,int> b = bidDepthsLog.at(t);
+        map<double,int> a = askDepthsLog.at(t);
+        f << t;
+        for (auto i=b.rbegin(); i!=b.rend(); i++) f << "," << i->first << "," << i->second;
+        for (auto i=a.begin(); i!=a.end(); i++) f << "," << i->first << "," << i->second;
+        f << endl;
+    }
+    f.close();
 }
 
 #endif
