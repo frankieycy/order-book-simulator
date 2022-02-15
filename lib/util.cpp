@@ -22,9 +22,12 @@ S& operator<<(S& out, const vector<T>& vec){
     if(vec.size()==0) out << "[]";
     else{
         out << "[";
-        for(auto p=vec.begin(); p!=vec.end(); p++)
-            if(is_same<T,string>::value) out << "\"" << *p << "\"" << ((p==vec.end()-1)?"]":",");
-            else out << *p << ((p==vec.end()-1)?"]":",");
+        for(auto p=vec.begin(); p!=vec.end(); p++) {
+            out << ((p==vec.begin())?"":",");
+            if(is_same<T,string>::value) out << "\"" << *p << "\"";
+            else out << *p;
+        }
+        out << "]";
     }
     return out;
 }
@@ -35,9 +38,31 @@ S& operator<<(S& out, const deque<T>& deq){
     if(deq.size()==0) out << "[]";
     else{
         out << "[";
-        for(auto p=deq.begin(); p!=deq.end(); p++)
-            if(is_same<T,string>::value) out << "\"" << *p << "\"" << ((p==deq.end()-1)?"]":",");
-            else out << *p << ((p==deq.end()-1)?"]":",");
+        for(auto p=deq.begin(); p!=deq.end(); p++) {
+            out << ((p==deq.begin())?"":",");
+            if(is_same<T,string>::value) out << "\"" << *p << "\"";
+            else out << *p;
+        }
+        out << "]";
+    }
+    return out;
+}
+
+template <class S, class T1, class T2>
+S& operator<<(S& out, const map<T1,T2>& m){
+    // print elements of a map
+    if(m.size()==0) out << "{}";
+    else{
+        out << "{";
+        for(auto p=m.begin(); p!=m.end(); p++) {
+            out << ((p==m.begin())?"":",");
+            if(is_same<T1,string>::value) out << "\"" << p->first << "\"";
+            else out << p->first;
+            out << ":";
+            if(is_same<T2,string>::value) out << "\"" << p->second << "\"";
+            else out << p->second;
+        }
+        out << "}";
     }
     return out;
 }

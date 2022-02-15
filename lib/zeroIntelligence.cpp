@@ -7,17 +7,20 @@ class ZeroIntelligence {
 private:
     int id;
     int time;
+    int snapInterval;
     int numOrder, numOrderSent;
     int priceBnd, limPriceBnd;
     double mktOrderArvRate;
     double limOrderArvRate;
     double cclOrderArvRate;
     LimitOrderBook ob;
+    map<int,map<double,int>> bidDepthsLog, askDepthsLog;
 public:
     /**** constructors ****/
     ZeroIntelligence(); ~ZeroIntelligence(){};
     ZeroIntelligence(int numOrder, int priceBnd, int limPriceBnd,
-        double limOrderArvRate, double mktOrderArvRate, double cclOrderArvRate);
+        double limOrderArvRate, double mktOrderArvRate, double cclOrderArvRate,
+        int snapInterval=1e3);
     ZeroIntelligence(const ZeroIntelligence& zi);
     ZeroIntelligence* copy() const;
     /**** accessors ****/
@@ -30,7 +33,9 @@ public:
     double getMktOrderArvRate() const {return mktOrderArvRate;}
     double getLimOrderArvRate() const {return limOrderArvRate;}
     double getCclOrderArvRate() const {return cclOrderArvRate;}
-    LimitOrderBook* getLimitOrderBook() {return &ob;}
+    map<int,map<double,int>>* getBidDepthsLogPtr() {return &bidDepthsLog;}
+    map<int,map<double,int>>* getAskDepthsLogPtr() {return &askDepthsLog;}
+    LimitOrderBook* getLimitOrderBookPtr() {return &ob;}
     void printBook(int bookLevels=0, int tradeLevels=0, bool summarizeDepth=true) const;
     /**** mutators ****/
     int setNumOrder(int numOrder);
@@ -40,6 +45,7 @@ public:
     double setLimOrderArvRate(double arvRate);
     double setCclOrderArvRate(double arvRate);
     /**** main ****/
+    void snapBook();
     void initOrderBook(vector<int> sizes={});
     void sendLimitOrder(Side side);
     void sendMarketOrder(Side side);
@@ -50,11 +56,11 @@ public:
 
 /******************************************************************************/
 
-ZeroIntelligence::ZeroIntelligence(): id(0), time(0), mktOrderArvRate(0), limOrderArvRate(0), cclOrderArvRate(0), numOrder(0), numOrderSent(0), priceBnd(0), limPriceBnd(0) {}
+ZeroIntelligence::ZeroIntelligence(): id(0), time(0), snapInterval(1e3), numOrder(0), numOrderSent(0), priceBnd(0), limPriceBnd(0), mktOrderArvRate(0), limOrderArvRate(0), cclOrderArvRate(0) {}
 
-ZeroIntelligence::ZeroIntelligence(int numOrder, int priceBnd, int limPriceBnd, double limOrderArvRate, double mktOrderArvRate, double cclOrderArvRate): id(0), time(0), limOrderArvRate(limOrderArvRate), mktOrderArvRate(mktOrderArvRate), cclOrderArvRate(cclOrderArvRate), numOrder(numOrder), numOrderSent(0), priceBnd(priceBnd), limPriceBnd(limPriceBnd) {}
+ZeroIntelligence::ZeroIntelligence(int numOrder, int priceBnd, int limPriceBnd, double limOrderArvRate, double mktOrderArvRate, double cclOrderArvRate, int snapInterval): id(0), time(0), snapInterval(snapInterval), numOrder(numOrder), numOrderSent(0), priceBnd(priceBnd), limPriceBnd(limPriceBnd), limOrderArvRate(limOrderArvRate), mktOrderArvRate(mktOrderArvRate), cclOrderArvRate(cclOrderArvRate) {}
 
-ZeroIntelligence::ZeroIntelligence(const ZeroIntelligence& zi): id(zi.id), time(zi.time), limOrderArvRate(zi.limOrderArvRate), mktOrderArvRate(zi.mktOrderArvRate), cclOrderArvRate(zi.cclOrderArvRate), numOrder(zi.numOrder), numOrderSent(zi.numOrderSent), priceBnd(zi.priceBnd), limPriceBnd(zi.limPriceBnd), ob(zi.ob) {}
+ZeroIntelligence::ZeroIntelligence(const ZeroIntelligence& zi): id(zi.id), time(zi.time), numOrder(zi.numOrder), numOrderSent(zi.numOrderSent), priceBnd(zi.priceBnd), limPriceBnd(zi.limPriceBnd), limOrderArvRate(zi.limOrderArvRate), mktOrderArvRate(zi.mktOrderArvRate), cclOrderArvRate(zi.cclOrderArvRate), ob(zi.ob) {}
 
 ZeroIntelligence* ZeroIntelligence::copy() const {
     return new ZeroIntelligence(*this);
@@ -95,17 +101,25 @@ double ZeroIntelligence::setCclOrderArvRate(double arvRate) {
     return this->cclOrderArvRate;
 }
 
+void ZeroIntelligence::snapBook() {
+    if (time % snapInterval == 0) {
+        bidDepthsLog[time] = ob.snapBidDepths(30);
+        askDepthsLog[time] = ob.snapAskDepths(30);
+    }
+}
+
 void ZeroIntelligence::initOrderBook(vector<int> sizes) {
     if (!sizes.size()) sizes = {1,2,2,3,3,4,4,5};
     int limit = 1, idx = 0;
     while (limit <= priceBnd) {
         for (int i=0; i<sizes[idx]; i++) {
-            ob.process(LimitOrder(id++,time++,"ZI",BID,1,-limit));
-            ob.process(LimitOrder(id++,time++,"ZI",ASK,1,+limit));
+            ob.process(LimitOrder(id++,0,"ZI",BID,1,-limit));
+            ob.process(LimitOrder(id++,0,"ZI",ASK,1,+limit));
         }
         idx = min(idx+1,(int)sizes.size()-1);
         limit++;
     }
+    snapBook();
 }
 
 void ZeroIntelligence::sendLimitOrder(Side side) {
@@ -126,7 +140,36 @@ void ZeroIntelligence::sendMarketOrder(Side side) {
 }
 
 void ZeroIntelligence::sendCancelOrder(Side side) {
-    // ob.process(CancelOrder(id++,time++,"ZI",idRef));
+    int idRef = -1;
+    int cumDepth = 0;
+    int L = limPriceBnd;
+    double limit;
+    if (side == BID) {
+        int a = ob.getTopAsk();
+        int threshold = uniformIntRand(1,ob.getBidDepthBetween(a-L,a-1));
+        deque<double>* bidPrices = ob.getBidPricesPtr();
+        map<double,int>* bidDepths = ob.getBidDepthsPtr();
+        for (auto p : *bidPrices) {
+            cumDepth += bidDepths->at(p);
+            if (cumDepth >= threshold) {
+                limit = p; break;
+            }
+        }
+        idRef = ob.peekBidOrderAt(limit)->getId();
+    } else if (side == ASK) {
+        int b = ob.getTopBid();
+        int threshold = uniformIntRand(1,ob.getAskDepthBetween(b+1,b+L));
+        deque<double>* askPrices = ob.getAskPricesPtr();
+        map<double,int>* askDepths = ob.getAskDepthsPtr();
+        for (auto p : *askPrices) {
+            cumDepth += askDepths->at(p);
+            if (cumDepth >= threshold) {
+                limit = p; break;
+            }
+        }
+        idRef = ob.peekAskOrderAt(limit)->getId();
+    }
+    ob.process(CancelOrder(id++,time++,"ZI",idRef));
 }
 
 void ZeroIntelligence::generateOrder() {
@@ -164,6 +207,7 @@ void ZeroIntelligence::simulate() {
     while (numOrderSent < numOrder) {
         generateOrder();
         numOrderSent++;
+        snapBook();
     }
 }
 

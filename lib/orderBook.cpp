@@ -165,6 +165,8 @@ public:
     deque<Trade*> getTrades() const;
     deque<double> getBidPrices() const {return bidPrices;}
     deque<double> getAskPrices() const {return askPrices;}
+    deque<double>* getBidPricesPtr() {return &bidPrices;}
+    deque<double>* getAskPricesPtr() {return &askPrices;}
     deque<MarketOrder*> getBidMktQueue() const;
     deque<MarketOrder*> getAskMktQueue() const;
     map<int,Order*> getOrdersLog() const;
@@ -176,12 +178,16 @@ public:
     deque<LimitOrder*> getAskOrders(double price) const;
     map<double,int> getBidDepths() const {return bidDepths;}
     map<double,int> getAskDepths() const {return askDepths;}
+    map<double,int>* getBidDepthsPtr() {return &bidDepths;}
+    map<double,int>* getAskDepthsPtr() {return &askDepths;}
     int getBidDepthAt(double price) const {return (bidDepths.count(price))?bidDepths.at(price):0;}
     int getAskDepthAt(double price) const {return (askDepths.count(price))?askDepths.at(price):0;}
     int getBidDepthBetween(double price0, double price1) const;
     int getAskDepthBetween(double price0, double price1) const;
     LimitOrder* peekBidOrderAt(double price) const;
     LimitOrder* peekAskOrderAt(double price) const;
+    map<double,int> snapBidDepths(int bookLevels=0) const;
+    map<double,int> snapAskDepths(int bookLevels=0) const;
     string getAsJson() const;
     string read() const;
     void printBook(int bookLevels=0, int tradeLevels=0, bool summarizeDepth=true) const;
@@ -597,6 +603,26 @@ LimitOrder* LimitOrderBook::peekAskOrderAt(double price) const {
     auto i = asks.find(price);
     if (i != asks.end()) return i->second.front()->copy();
     else return 0;
+}
+
+map<double,int> LimitOrderBook::snapBidDepths(int bookLevels) const {
+    if (!bookLevels) bookLevels = bidPrices.size();
+    map<double,int> bidDepthsSnap;
+    for (auto p : bidPrices) {
+        bidDepthsSnap[p] = bidDepths.at(p);
+        if (bidDepthsSnap.size() == bookLevels) break;
+    }
+    return bidDepthsSnap;
+}
+
+map<double,int> LimitOrderBook::snapAskDepths(int bookLevels) const {
+    if (!bookLevels) bookLevels = askPrices.size();
+    map<double,int> askDepthsSnap;
+    for (auto p : askPrices) {
+        askDepthsSnap[p] = askDepths.at(p);
+        if (askDepthsSnap.size() == bookLevels) break;
+    }
+    return askDepthsSnap;
 }
 
 string LimitOrderBook::getAsJson() const {
