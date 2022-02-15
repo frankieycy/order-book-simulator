@@ -9,9 +9,9 @@ class ZeroIntelligence {
 private:
     int id;
     int time;
-    int snapInterval, snapBookLevels;
     int numOrder, numOrderSent;
     int priceBnd, limPriceBnd;
+    int snapInterval, snapBookLevels;
     double mktOrderArvRate;
     double limOrderArvRate;
     double cclOrderArvRate;
@@ -32,58 +32,60 @@ public:
     int getNumOrderSent() const {return numOrderSent;}
     int getPriceBnd() const {return priceBnd;}
     int getLimPriceBnd() const {return limPriceBnd;}
+    int getSnapInterval() const {return snapInterval;}
+    int getSnapBookLevels() const {return snapBookLevels;}
     double getMktOrderArvRate() const {return mktOrderArvRate;}
     double getLimOrderArvRate() const {return limOrderArvRate;}
     double getCclOrderArvRate() const {return cclOrderArvRate;}
-    deque<Trade*> getTrades() {return ob.getTrades();}
-    map<int,map<double,int>> getBidDepthsLog() {return bidDepthsLog;}
-    map<int,map<double,int>> getAskDepthsLog() {return askDepthsLog;}
+    deque<Trade*> getTrades() const {return ob.getTrades();}
+    deque<Trade*>* getTradesPtr() {return ob.getTradesPtr();}
+    map<int,Order*> getOrdersLog() const {return ob.getOrdersLog();}
+    map<int,Order*>* getOrdersLogPtr() {return ob.getOrdersLogPtr();}
+    map<double,int> getBidDepths() const {return ob.getBidDepths();}
+    map<double,int> getAskDepths() const {return ob.getAskDepths();}
+    map<double,int>* getBidDepthsPtr() {return ob.getBidDepthsPtr();}
+    map<double,int>* getAskDepthsPtr() {return ob.getAskDepthsPtr();}
+    map<double,deque<LimitOrder*>>* getBidsPtr() {return ob.getBidsPtr();}
+    map<double,deque<LimitOrder*>>* getAsksPtr() {return ob.getAsksPtr();}
+    map<int,map<double,int>> getBidDepthsLog() const {return bidDepthsLog;}
+    map<int,map<double,int>> getAskDepthsLog() const {return askDepthsLog;}
     map<int,map<double,int>>* getBidDepthsLogPtr() {return &bidDepthsLog;}
     map<int,map<double,int>>* getAskDepthsLogPtr() {return &askDepthsLog;}
     LimitOrderBook* getLimitOrderBookPtr() {return &ob;}
-    void printBook(int bookLevels=0, int tradeLevels=0, bool summarizeDepth=true) const;
-    void printTradesToJson(string name) const;
-    void printDepthsLogToJson(string name) const;
     /**** mutators ****/
     int setNumOrder(int numOrder);
     int setPriceBnd(int priceBnd);
     int setLimPriceBnd(int limPriceBnd);
+    int setSnapInterval(int snapInterval);
+    int setSnapBookLevels(int snapBookLevels);
     double setMktOrderArvRate(double arvRate);
     double setLimOrderArvRate(double arvRate);
     double setCclOrderArvRate(double arvRate);
     /**** main ****/
-    void snapBook();
     void initOrderBook(vector<int> sizes={});
     void sendLimitOrder(Side side);
     void sendMarketOrder(Side side);
     void sendCancelOrder(Side side, int depthBtw=0);
     void generateOrder();
     void simulate();
+    void snapBook();
+    void printBook(int bookLevels=0, int tradeLevels=0,
+        bool summarizeDepth=true) const;
+    void printTradesToJson(string name) const;
+    void printDepthsLogToJson(string name) const;
 };
 
 /**** class functions *********************************************************/
 //### ZeroIntelligence class ###################################################
 
-ZeroIntelligence::ZeroIntelligence(): id(0), time(0), snapInterval(1e3), snapBookLevels(50), numOrder(0), numOrderSent(0), priceBnd(0), limPriceBnd(0), mktOrderArvRate(0), limOrderArvRate(0), cclOrderArvRate(0) {}
+ZeroIntelligence::ZeroIntelligence(): id(0), time(0), numOrder(0), numOrderSent(0), priceBnd(0), limPriceBnd(0), snapInterval(1e3), snapBookLevels(50), mktOrderArvRate(0), limOrderArvRate(0), cclOrderArvRate(0) {}
 
-ZeroIntelligence::ZeroIntelligence(int numOrder, int priceBnd, int limPriceBnd, double limOrderArvRate, double mktOrderArvRate, double cclOrderArvRate, int snapInterval, int snapBookLevels): id(0), time(0), snapInterval(snapInterval), snapBookLevels(snapBookLevels), numOrder(numOrder), numOrderSent(0), priceBnd(priceBnd), limPriceBnd(limPriceBnd), limOrderArvRate(limOrderArvRate), mktOrderArvRate(mktOrderArvRate), cclOrderArvRate(cclOrderArvRate) {}
+ZeroIntelligence::ZeroIntelligence(int numOrder, int priceBnd, int limPriceBnd, double limOrderArvRate, double mktOrderArvRate, double cclOrderArvRate, int snapInterval, int snapBookLevels): id(0), time(0), numOrder(numOrder), numOrderSent(0), priceBnd(priceBnd), limPriceBnd(limPriceBnd), snapInterval(snapInterval), snapBookLevels(snapBookLevels), limOrderArvRate(limOrderArvRate), mktOrderArvRate(mktOrderArvRate), cclOrderArvRate(cclOrderArvRate) {}
 
-ZeroIntelligence::ZeroIntelligence(const ZeroIntelligence& zi): id(zi.id), time(zi.time), numOrder(zi.numOrder), numOrderSent(zi.numOrderSent), priceBnd(zi.priceBnd), limPriceBnd(zi.limPriceBnd), limOrderArvRate(zi.limOrderArvRate), mktOrderArvRate(zi.mktOrderArvRate), cclOrderArvRate(zi.cclOrderArvRate), ob(zi.ob) {}
+ZeroIntelligence::ZeroIntelligence(const ZeroIntelligence& zi): id(zi.id), time(zi.time), numOrder(zi.numOrder), numOrderSent(zi.numOrderSent), priceBnd(zi.priceBnd), limPriceBnd(zi.limPriceBnd), snapInterval(zi.snapInterval), snapBookLevels(zi.snapBookLevels), limOrderArvRate(zi.limOrderArvRate), mktOrderArvRate(zi.mktOrderArvRate), cclOrderArvRate(zi.cclOrderArvRate), ob(zi.ob) {}
 
 ZeroIntelligence* ZeroIntelligence::copy() const {
     return new ZeroIntelligence(*this);
-}
-
-void ZeroIntelligence::printBook(int bookLevels, int tradeLevels, bool summarizeDepth) const {
-    ob.printBook(bookLevels, tradeLevels, summarizeDepth);
-}
-
-void ZeroIntelligence::printTradesToJson(string name) const {
-    //
-}
-
-void ZeroIntelligence::printDepthsLogToJson(string name) const {
-    //
 }
 
 int ZeroIntelligence::setNumOrder(int numOrder) {
@@ -101,6 +103,15 @@ int ZeroIntelligence::setLimPriceBnd(int limPriceBnd) {
     return this->limPriceBnd;
 }
 
+int ZeroIntelligence::setSnapInterval(int snapInterval) {
+    this->snapInterval = snapInterval;
+    return this->snapInterval;
+}
+
+int ZeroIntelligence::setSnapBookLevels(int snapBookLevels) {
+    this->snapBookLevels = snapBookLevels;
+    return this->snapBookLevels;
+}
 
 double ZeroIntelligence::setMktOrderArvRate(double arvRate) {
     this->mktOrderArvRate = arvRate;
@@ -115,13 +126,6 @@ double ZeroIntelligence::setLimOrderArvRate(double arvRate) {
 double ZeroIntelligence::setCclOrderArvRate(double arvRate) {
     this->cclOrderArvRate = arvRate;
     return this->cclOrderArvRate;
-}
-
-void ZeroIntelligence::snapBook() {
-    if (time % snapInterval == 0) {
-        bidDepthsLog[time] = ob.snapBidDepths(snapBookLevels);
-        askDepthsLog[time] = ob.snapAskDepths(snapBookLevels);
-    }
 }
 
 void ZeroIntelligence::initOrderBook(vector<int> sizes) {
@@ -227,6 +231,25 @@ void ZeroIntelligence::simulate() {
         numOrderSent++;
         snapBook();
     }
+}
+
+void ZeroIntelligence::snapBook() {
+    if (time % snapInterval == 0) {
+        bidDepthsLog[time] = ob.snapBidDepths(snapBookLevels);
+        askDepthsLog[time] = ob.snapAskDepths(snapBookLevels);
+    }
+}
+
+void ZeroIntelligence::printBook(int bookLevels, int tradeLevels, bool summarizeDepth) const {
+    ob.printBook(bookLevels, tradeLevels, summarizeDepth);
+}
+
+void ZeroIntelligence::printTradesToJson(string name) const {
+    // TO-DO
+}
+
+void ZeroIntelligence::printDepthsLogToJson(string name) const {
+    // TO-DO
 }
 
 #endif

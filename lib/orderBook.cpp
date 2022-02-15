@@ -16,16 +16,16 @@ private:
 public:
     /**** constructors ****/
     Order(){}; virtual ~Order(){};
-    Order(const Order& order);
     Order(int id, int time, string name, OrderType type);
+    Order(const Order& order);
     virtual Order* copy() const;
     /**** accessors ****/
     int getId() const {return id;}
     int getTime() const {return time;}
     string getName() const {return name;}
     OrderType getType() const {return type;}
-    virtual string getAsJson() const;
     virtual string read() const;
+    virtual string getAsJson() const;
     /**** mutators ****/
     int setId(int id);
     int setTime(int time);
@@ -37,48 +37,46 @@ public:
 
 class LimitOrder : public Order {
 private:
-    int size;
     Side side;
+    int size;
     double price;
 public:
     /**** constructors ****/
     LimitOrder(){}; ~LimitOrder(){}
-    LimitOrder(const LimitOrder& order);
     LimitOrder(int id, int time, string name, Side side, int size, double price);
+    LimitOrder(const LimitOrder& order);
     LimitOrder* copy() const;
     /**** accessors ****/
-    int getSize() const {return size;}
     Side getSide() const {return side;}
+    int getSize() const {return size;}
     double getPrice() const {return price;}
-    string getAsJson() const;
     string read() const;
+    string getAsJson() const;
     /**** mutators ****/
+    Side setSide(Side side);
     int setSize(int size);
     int reduceSize(int size);
-    Side setSide(Side side);
     double setPrice(double price);
 };
 
 class MarketOrder : public Order {
 private:
-    int size;
     Side side;
+    int size;
 public:
     /**** constructors ****/
     MarketOrder(){}; ~MarketOrder(){}
-    MarketOrder(const MarketOrder& order);
     MarketOrder(int id, int time, string name, Side side, int size);
+    MarketOrder(const MarketOrder& order);
     MarketOrder* copy() const;
     /**** accessors ****/
-    int getSize() const {return size;}
     Side getSide() const {return side;}
-    string getAsJson() const;
+    int getSize() const {return size;}
     string read() const;
+    string getAsJson() const;
     /**** mutators ****/
-    int setSize(int size);
     Side setSide(Side side);
-    /**** operators ****/
-    Order& operator=(const MarketOrder& order);
+    int setSize(int size);
 };
 
 class CancelOrder : public Order {
@@ -87,13 +85,13 @@ private:
 public:
     /**** constructors ****/
     CancelOrder(){}; ~CancelOrder(){};
-    CancelOrder(const CancelOrder& order);
     CancelOrder(int id, int time, string name, int idRef);
+    CancelOrder(const CancelOrder& order);
     CancelOrder* copy() const;
     /**** accessors ****/
     int getIdRef() const {return idRef;}
-    string getAsJson() const;
     string read() const;
+    string getAsJson() const;
     /**** mutators ****/
     int setIdRef(int idRef);
 };
@@ -105,19 +103,19 @@ private:
 public:
     /**** constructors ****/
     ModifyOrder(){}; ~ModifyOrder();
-    ModifyOrder(const ModifyOrder& order);
     ModifyOrder(int id, int time, string name, int idRef, const Order& newOrder);
+    ModifyOrder(const ModifyOrder& order);
     ModifyOrder* copy() const;
     /**** accessors ****/
     int getIdRef() const {return idRef;}
     Order* getNewOrder() const {return newOrder;}
-    string getAsJson() const;
     string read() const;
+    string getAsJson() const;
     /**** mutators ****/
     int setIdRef(int idRef);
     Order* setNewOrder(const Order& newOrder);
     /**** operators ****/
-    Order& operator=(const ModifyOrder& order);
+    Order& operator=(const ModifyOrder& order); // TO-DO
 };
 
 class Trade {
@@ -130,14 +128,15 @@ private:
 public:
     /**** constructors ****/
     Trade(){}; ~Trade();
+    Trade(Side side, int size, double price,
+        const Order& bookOrder, const Order& matchOrder);
     Trade(const Trade& trade);
-    Trade(Side side, int size, double price, const Order& bookOrder, const Order& matchOrder);
     Trade* copy() const;
     /**** accessors ****/
-    string getAsJson() const;
     string read() const;
+    string getAsJson() const;
     /**** operators ****/
-    Trade& operator=(const Trade& trade);
+    Trade& operator=(const Trade& trade); // TO-DO
 };
 
 class LimitOrderBook {
@@ -160,39 +159,44 @@ public:
     LimitOrderBook* copy() const;
     /**** accessors ****/
     string getName() const {return name;}
-    int getBidTotalDepth() const {return bidTotalDepth;}
-    int getAskTotalDepth() const {return askTotalDepth;}
     double getTopBid() const {return topBid;}
     double getTopAsk() const {return topAsk;}
     deque<Trade*> getTrades() const;
+    deque<Trade*>* getTradesPtr() {return &trades;}
     deque<double> getBidPrices() const {return bidPrices;}
     deque<double> getAskPrices() const {return askPrices;}
     deque<double>* getBidPricesPtr() {return &bidPrices;}
     deque<double>* getAskPricesPtr() {return &askPrices;}
+    deque<LimitOrder*> getBidOrders(double price) const;
+    deque<LimitOrder*> getAskOrders(double price) const;
     deque<MarketOrder*> getBidMktQueue() const;
     deque<MarketOrder*> getAskMktQueue() const;
     map<int,Order*> getOrdersLog() const;
+    map<int,Order*>* getOrdersLogPtr() {return &ordersLog;}
     map<int,double> getBidsLog() const {return bidsLog;}
     map<int,double> getAsksLog() const {return asksLog;}
-    map<double,deque<LimitOrder*>> getBids() const;
-    map<double,deque<LimitOrder*>> getAsks() const;
-    deque<LimitOrder*> getBidOrders(double price) const;
-    deque<LimitOrder*> getAskOrders(double price) const;
     map<double,int> getBidDepths() const {return bidDepths;}
     map<double,int> getAskDepths() const {return askDepths;}
     map<double,int>* getBidDepthsPtr() {return &bidDepths;}
     map<double,int>* getAskDepthsPtr() {return &askDepths;}
-    int getBidDepthAt(double price) const {return (bidDepths.count(price))?bidDepths.at(price):0;}
-    int getAskDepthAt(double price) const {return (askDepths.count(price))?askDepths.at(price):0;}
+    map<double,deque<LimitOrder*>> getBids() const;
+    map<double,deque<LimitOrder*>> getAsks() const;
+    map<double,deque<LimitOrder*>>* getBidsPtr() {return &bids;}
+    map<double,deque<LimitOrder*>>* getAsksPtr() {return &asks;}
+    int getBidTotalDepth() const {return bidTotalDepth;}
+    int getAskTotalDepth() const {return askTotalDepth;}
+    int getBidDepthAt(double price) const
+        {return (bidDepths.count(price))?bidDepths.at(price):0;}
+    int getAskDepthAt(double price) const
+        {return (askDepths.count(price))?askDepths.at(price):0;}
     int getBidDepthBetween(double price0, double price1) const;
     int getAskDepthBetween(double price0, double price1) const;
-    LimitOrder* peekBidOrderAt(double price) const;
-    LimitOrder* peekAskOrderAt(double price) const;
     map<double,int> snapBidDepths(int bookLevels=0) const;
     map<double,int> snapAskDepths(int bookLevels=0) const;
-    string getAsJson() const;
+    LimitOrder* peekBidOrderAt(double price) const;
+    LimitOrder* peekAskOrderAt(double price) const;
     string read() const;
-    void printBook(int bookLevels=0, int tradeLevels=0, bool summarizeDepth=true) const;
+    string getAsJson() const;
     /**** main ****/
     double updateTopBid();
     double updateTopAsk();
@@ -205,6 +209,8 @@ public:
     void process(const ModifyOrder& order);
     void processMktQueue(Side side);
     void processOrder(const Order& order);
+    void printBook(int bookLevels=0, int tradeLevels=0,
+        bool summarizeDepth=true) const;
 };
 
 class Exchange {
@@ -220,12 +226,18 @@ bool match(Side side, double limit, double price) {
 
 //### Order class ##############################################################
 
-Order::Order(const Order& order): id(order.id), time(order.time), name(order.name), type(order.type) {}
-
 Order::Order(int id, int time, string name, OrderType type): id(id), time(time), name(name), type(type) {}
+
+Order::Order(const Order& order): id(order.id), time(order.time), name(order.name), type(order.type) {}
 
 Order* Order::copy() const {
     return new Order(*this);
+}
+
+string Order::read() const {
+    ostringstream oss;
+    oss << getName() << " " << getType();
+    return oss.str();
 }
 
 string Order::getAsJson() const {
@@ -236,12 +248,6 @@ string Order::getAsJson() const {
     "\"name\":\"" << getName() << "\"," <<
     "\"type\":\"" << getType() << "\"" <<
     "}";
-    return oss.str();
-}
-
-string Order::read() const {
-    ostringstream oss;
-    oss << getName() << " " << getType();
     return oss.str();
 }
 
@@ -267,12 +273,18 @@ OrderType Order::setType(OrderType type) {
 
 //### LimitOrder class #########################################################
 
-LimitOrder::LimitOrder(const LimitOrder& order): Order(order), side(order.side), size(order.size), price(order.price) {}
-
 LimitOrder::LimitOrder(int id, int time, string name, Side side, int size, double price): Order(id, time, name, LIMIT), side(side), size(size), price(price) {}
+
+LimitOrder::LimitOrder(const LimitOrder& order): Order(order), side(order.side), size(order.size), price(order.price) {}
 
 LimitOrder* LimitOrder::copy() const {
     return new LimitOrder(*this);
+}
+
+string LimitOrder::read() const {
+    ostringstream oss;
+    oss << getName() << " " << getType() << " " << getSide() << " " << getSize() << " @ $" << getPrice();
+    return oss.str();
 }
 
 string LimitOrder::getAsJson() const {
@@ -289,10 +301,9 @@ string LimitOrder::getAsJson() const {
     return oss.str();
 }
 
-string LimitOrder::read() const {
-    ostringstream oss;
-    oss << getName() << " " << getType() << " " << getSide() << " " << getSize() << " @ $" << getPrice();
-    return oss.str();
+Side LimitOrder::setSide(Side side) {
+    this->side = side;
+    return this->side;
 }
 
 int LimitOrder::setSize(int size) {
@@ -305,11 +316,6 @@ int LimitOrder::reduceSize(int size) {
     return this->size;
 }
 
-Side LimitOrder::setSide(Side side) {
-    this->side = side;
-    return this->side;
-}
-
 double LimitOrder::setPrice(double price) {
     this->price = price;
     return this->price;
@@ -317,12 +323,18 @@ double LimitOrder::setPrice(double price) {
 
 //### MarketOrder class ########################################################
 
-MarketOrder::MarketOrder(const MarketOrder& order): Order(order), side(order.side), size(order.size) {}
-
 MarketOrder::MarketOrder(int id, int time, string name, Side side, int size): Order(id, time, name, MARKET), side(side), size(size) {}
+
+MarketOrder::MarketOrder(const MarketOrder& order): Order(order), side(order.side), size(order.size) {}
 
 MarketOrder* MarketOrder::copy() const {
     return new MarketOrder(*this);
+}
+
+string MarketOrder::read() const {
+    ostringstream oss;
+    oss << getName() << " " << getType() << " " << getSide() << " " << getSize();
+    return oss.str();
 }
 
 string MarketOrder::getAsJson() const {
@@ -338,10 +350,9 @@ string MarketOrder::getAsJson() const {
     return oss.str();
 }
 
-string MarketOrder::read() const {
-    ostringstream oss;
-    oss << getName() << " " << getType() << " " << getSide() << " " << getSize();
-    return oss.str();
+Side MarketOrder::setSide(Side side) {
+    this->side = side;
+    return this->side;
 }
 
 int MarketOrder::setSize(int size) {
@@ -349,19 +360,20 @@ int MarketOrder::setSize(int size) {
     return this->size;
 }
 
-Side MarketOrder::setSide(Side side) {
-    this->side = side;
-    return this->side;
-}
-
 //### CancelOrder class ########################################################
-
-CancelOrder::CancelOrder(const CancelOrder& order): Order(order), idRef(order.idRef) {}
 
 CancelOrder::CancelOrder(int id, int time, string name, int idRef): Order(id, time, name, CANCEL), idRef(idRef) {}
 
+CancelOrder::CancelOrder(const CancelOrder& order): Order(order), idRef(order.idRef) {}
+
 CancelOrder* CancelOrder::copy() const {
     return new CancelOrder(*this);
+}
+
+string CancelOrder::read() const {
+    ostringstream oss;
+    oss << getName() << " " << getType() << " id: " << getIdRef();
+    return oss.str();
 }
 
 string CancelOrder::getAsJson() const {
@@ -376,12 +388,6 @@ string CancelOrder::getAsJson() const {
     return oss.str();
 }
 
-string CancelOrder::read() const {
-    ostringstream oss;
-    oss << getName() << " " << getType() << " id: " << getIdRef();
-    return oss.str();
-}
-
 int CancelOrder::setIdRef(int idRef) {
     this->idRef = idRef;
     return this->idRef;
@@ -389,9 +395,9 @@ int CancelOrder::setIdRef(int idRef) {
 
 //### ModifyOrder class ########################################################
 
-ModifyOrder::ModifyOrder(const ModifyOrder& order): Order(order), idRef(order.idRef), newOrder(order.copy()) {}
-
 ModifyOrder::ModifyOrder(int id, int time, string name, int idRef, const Order& newOrder): Order(id, time, name, MODIFY), idRef(idRef), newOrder(newOrder.copy()) {}
+
+ModifyOrder::ModifyOrder(const ModifyOrder& order): Order(order), idRef(order.idRef), newOrder(order.copy()) {}
 
 ModifyOrder::~ModifyOrder() {
     delete newOrder;
@@ -399,6 +405,12 @@ ModifyOrder::~ModifyOrder() {
 
 ModifyOrder* ModifyOrder::copy() const {
     return new ModifyOrder(*this);
+}
+
+string ModifyOrder::read() const {
+    ostringstream oss;
+    oss << getName() << " " << getType() << " id: " << getIdRef() << " " << *getNewOrder();
+    return oss.str();
 }
 
 string ModifyOrder::getAsJson() const {
@@ -411,12 +423,6 @@ string ModifyOrder::getAsJson() const {
     "\"idRef\":"    << getIdRef()     << "," <<
     "\"newOrder\":" << *getNewOrder() <<
     "}";
-    return oss.str();
-}
-
-string ModifyOrder::read() const {
-    ostringstream oss;
-    oss << getName() << " " << getType() << " id: " << getIdRef() << " " << *getNewOrder();
     return oss.str();
 }
 
@@ -433,9 +439,9 @@ Order* ModifyOrder::setNewOrder(const Order& newOrder) {
 
 //### Trade class ##############################################################
 
-Trade::Trade(const Trade& trade): side(trade.side), size(trade.size), price(trade.price), bookOrder(trade.bookOrder->copy()), matchOrder(trade.matchOrder->copy()) {}
-
 Trade::Trade(Side side, int size, double price, const Order& bookOrder, const Order& matchOrder): side(side), size(size), price(price), bookOrder(bookOrder.copy()), matchOrder(matchOrder.copy()) {}
+
+Trade::Trade(const Trade& trade): side(trade.side), size(trade.size), price(trade.price), bookOrder(trade.bookOrder->copy()), matchOrder(trade.matchOrder->copy()) {}
 
 Trade::~Trade() {
     delete bookOrder;
@@ -444,6 +450,12 @@ Trade::~Trade() {
 
 Trade* Trade::copy() const {
     return new Trade(*this);
+}
+
+string Trade::read() const {
+    ostringstream oss;
+    oss << "trade " << matchOrder->getName() << " " << side << " " << size << " @ $" << price;
+    return oss.str();
 }
 
 string Trade::getAsJson() const {
@@ -458,20 +470,14 @@ string Trade::getAsJson() const {
     return oss.str();
 }
 
-string Trade::read() const {
-    ostringstream oss;
-    oss << "trade " << bookOrder->getName() << " " << side << " " << size << " @ $" << price;
-    return oss.str();
-}
-
 //### LimitOrderBook class #####################################################
 
-LimitOrderBook::LimitOrderBook(): topBid(0), topAsk(0), bidTotalDepth(0), askTotalDepth(0) {}
+LimitOrderBook::LimitOrderBook(): name(""), topBid(0), topAsk(0), bidTotalDepth(0), askTotalDepth(0) {}
 
 LimitOrderBook::LimitOrderBook(string name): name(name), topBid(0), topAsk(0), bidTotalDepth(0), askTotalDepth(0) {}
 
 LimitOrderBook::LimitOrderBook(const LimitOrderBook& book): name(book.name), topBid(book.topBid), topAsk(book.topAsk), bidTotalDepth(book.bidTotalDepth), askTotalDepth(book.askTotalDepth), bidPrices(book.bidPrices), askPrices(book.askPrices), bidsLog(book.bidsLog), asksLog(book.asksLog), bidDepths(book.bidDepths), askDepths(book.askDepths) {
-    //
+    // TO-DO: deep copy ptr
 }
 
 LimitOrderBook::~LimitOrderBook() {
@@ -493,6 +499,24 @@ deque<Trade*> LimitOrderBook::getTrades() const {
     deque<Trade*> tradesCopy;
     for (auto t : trades) tradesCopy.push_back(t->copy());
     return tradesCopy;
+}
+
+deque<LimitOrder*> LimitOrderBook::getBidOrders(double price) const {
+    auto i = bids.find(price);
+    if (i != bids.end()) {
+        deque<LimitOrder*> orders;
+        for (auto o : i->second) orders.push_back(o->copy());
+        return orders;
+    } else return {};
+}
+
+deque<LimitOrder*> LimitOrderBook::getAskOrders(double price) const {
+    auto i = asks.find(price);
+    if (i != asks.end()) {
+        deque<LimitOrder*> orders;
+        for (auto o : i->second) orders.push_back(o->copy());
+        return orders;
+    } else return {};
 }
 
 deque<MarketOrder*> LimitOrderBook::getBidMktQueue() const {
@@ -527,24 +551,6 @@ map<double,deque<LimitOrder*>> LimitOrderBook::getAsks() const {
     return asksCopy;
 }
 
-deque<LimitOrder*> LimitOrderBook::getBidOrders(double price) const {
-    auto i = bids.find(price);
-    if (i != bids.end()) {
-        deque<LimitOrder*> orders;
-        for (auto o : i->second) orders.push_back(o->copy());
-        return orders;
-    } else return {};
-}
-
-deque<LimitOrder*> LimitOrderBook::getAskOrders(double price) const {
-    auto i = asks.find(price);
-    if (i != asks.end()) {
-        deque<LimitOrder*> orders;
-        for (auto o : i->second) orders.push_back(o->copy());
-        return orders;
-    } else return {};
-}
-
 int LimitOrderBook::getBidDepthBetween(double price0, double price1) const{
     int cumDepth = 0;
     auto i0 = lower_bound(bidPrices.begin(), bidPrices.end(), price1, greater<double>());
@@ -559,18 +565,6 @@ int LimitOrderBook::getAskDepthBetween(double price0, double price1) const{
     auto i1 = upper_bound(askPrices.begin(), askPrices.end(), price1);
     for (auto i=i0; i!=i1; i++) cumDepth += askDepths.at(*i);
     return cumDepth;
-}
-
-LimitOrder* LimitOrderBook::peekBidOrderAt(double price) const {
-    auto i = bids.find(price);
-    if (i != bids.end()) return i->second.front()->copy();
-    else return 0;
-}
-
-LimitOrder* LimitOrderBook::peekAskOrderAt(double price) const {
-    auto i = asks.find(price);
-    if (i != asks.end()) return i->second.front()->copy();
-    else return 0;
 }
 
 map<double,int> LimitOrderBook::snapBidDepths(int bookLevels) const {
@@ -593,6 +587,23 @@ map<double,int> LimitOrderBook::snapAskDepths(int bookLevels) const {
     return askDepthsSnap;
 }
 
+LimitOrder* LimitOrderBook::peekBidOrderAt(double price) const {
+    auto i = bids.find(price);
+    if (i != bids.end()) return i->second.front()->copy();
+    else return 0;
+}
+
+LimitOrder* LimitOrderBook::peekAskOrderAt(double price) const {
+    auto i = asks.find(price);
+    if (i != asks.end()) return i->second.front()->copy();
+    else return 0;
+}
+
+string LimitOrderBook::read() const {
+    // TO-DO
+    return "";
+}
+
 string LimitOrderBook::getAsJson() const {
     ostringstream oss;
     oss << "{";
@@ -606,48 +617,6 @@ string LimitOrderBook::getAsJson() const {
     oss << "}";
     oss << "}";
     return oss.str();
-}
-
-// string LimitOrderBook::read() const {
-//
-// }
-
-void LimitOrderBook::printBook(int bookLevels, int tradeLevels, bool summarizeDepth) const {
-    cout << "-------------------------------------------" << endl;
-    if (summarizeDepth) {
-        if (askPrices.size()) {
-            for (auto i=((bookLevels>0)?askPrices.begin()+min(bookLevels,(int)askPrices.size()):askPrices.end())-1; i!=askPrices.begin()-1; i--)
-                cout << "Level " << i-askPrices.begin()+1 << " : " << getAskDepthAt(*i) << " @ $" << *i << endl;
-            cout << "--------------------ASK--------------------" << endl;
-        }
-        if (bidPrices.size()) {
-            cout << "--------------------BID--------------------" << endl;
-            for (auto i=bidPrices.begin(); i!=((bookLevels>0)?bidPrices.begin()+min(bookLevels,(int)bidPrices.size()):bidPrices.end()); i++)
-                cout << "Level " << i-bidPrices.begin()+1 << " : " << getBidDepthAt(*i) << " @ $" << *i << endl;
-        }
-        if (trades.size()) {
-            cout << "-------------------TRADE-------------------" << endl;
-            for (auto i=trades.end()-1; i!=((tradeLevels>0)?trades.end()-min(tradeLevels,(int)trades.size()):trades.begin())-1; i--)
-                cout << "Trade " << trades.end()-i << " : " << (*i)->read() << endl;
-        }
-    } else {
-        if (askPrices.size()) {
-            for (auto i=((bookLevels>0)?askPrices.begin()+min(bookLevels,(int)askPrices.size()):askPrices.end())-1; i!=askPrices.begin()-1; i--)
-                cout << "Level " << i-askPrices.begin()+1 << " @ $" << *i << " : " << asks.at(*i) << endl;
-            cout << "--------------------ASK--------------------" << endl;
-        }
-        if (bidPrices.size()) {
-            cout << "--------------------BID--------------------" << endl;
-            for (auto i=bidPrices.begin(); i!=((bookLevels>0)?bidPrices.begin()+min(bookLevels,(int)bidPrices.size()):bidPrices.end()); i++)
-                cout << "Level " << i-bidPrices.begin()+1 << " @ $" << *i << " : " << bids.at(*i) << endl;
-        }
-        if (trades.size()) {
-            cout << "-------------------TRADE-------------------" << endl;
-            for (auto i=trades.end()-1; i!=((tradeLevels>0)?trades.end()-min(tradeLevels,(int)trades.size()):trades.begin())-1; i--)
-                cout << "Trade " << trades.end()-i << " : " << *i << endl;
-        }
-    }
-    cout << "-------------------------------------------" << endl;
 }
 
 double LimitOrderBook::updateTopBid() {
@@ -934,6 +903,44 @@ ostream& operator<<(ostream& out, Trade* const trade) {
 ostream& operator<<(ostream& out, const Trade& trade) {
     out << trade.getAsJson();
     return out;
+}
+
+void LimitOrderBook::printBook(int bookLevels, int tradeLevels, bool summarizeDepth) const {
+    cout << "-------------------------------------------" << endl;
+    if (summarizeDepth) {
+        if (askPrices.size()) {
+            for (auto i=((bookLevels>0)?askPrices.begin()+min(bookLevels,(int)askPrices.size()):askPrices.end())-1; i!=askPrices.begin()-1; i--)
+                cout << "Level " << i-askPrices.begin()+1 << " : " << getAskDepthAt(*i) << " @ $" << *i << endl;
+            cout << "--------------------ASK--------------------" << endl;
+        }
+        if (bidPrices.size()) {
+            cout << "--------------------BID--------------------" << endl;
+            for (auto i=bidPrices.begin(); i!=((bookLevels>0)?bidPrices.begin()+min(bookLevels,(int)bidPrices.size()):bidPrices.end()); i++)
+                cout << "Level " << i-bidPrices.begin()+1 << " : " << getBidDepthAt(*i) << " @ $" << *i << endl;
+        }
+        if (trades.size()) {
+            cout << "-------------------TRADE-------------------" << endl;
+            for (auto i=trades.end()-1; i!=((tradeLevels>0)?trades.end()-min(tradeLevels,(int)trades.size()):trades.begin())-1; i--)
+                cout << "Trade " << trades.end()-i << " : " << (*i)->read() << endl;
+        }
+    } else {
+        if (askPrices.size()) {
+            for (auto i=((bookLevels>0)?askPrices.begin()+min(bookLevels,(int)askPrices.size()):askPrices.end())-1; i!=askPrices.begin()-1; i--)
+                cout << "Level " << i-askPrices.begin()+1 << " @ $" << *i << " : " << asks.at(*i) << endl;
+            cout << "--------------------ASK--------------------" << endl;
+        }
+        if (bidPrices.size()) {
+            cout << "--------------------BID--------------------" << endl;
+            for (auto i=bidPrices.begin(); i!=((bookLevels>0)?bidPrices.begin()+min(bookLevels,(int)bidPrices.size()):bidPrices.end()); i++)
+                cout << "Level " << i-bidPrices.begin()+1 << " @ $" << *i << " : " << bids.at(*i) << endl;
+        }
+        if (trades.size()) {
+            cout << "-------------------TRADE-------------------" << endl;
+            for (auto i=trades.end()-1; i!=((tradeLevels>0)?trades.end()-min(tradeLevels,(int)trades.size()):trades.begin())-1; i--)
+                cout << "Trade " << trades.end()-i << " : " << *i << endl;
+        }
+    }
+    cout << "-------------------------------------------" << endl;
 }
 
 #endif

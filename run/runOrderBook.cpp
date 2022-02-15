@@ -6,14 +6,14 @@ void runNaive(int n, bool showProcess=false, bool showFinalBook=false) {
     int id = 0;
     LimitOrderBook ob;
     for (int i=0; i<n; i++) {
-        Side side = (uniformRand()<0.5)?BID:ASK;
-        int size = (int)uniformRand(5,20);
-        int ccl = (int)uniformRand(0,id);
-        double u = uniformRand();
+        Side side    = (uniformRand()<0.5)?BID:ASK;
+        int size     = (int)uniformRand(5,20);
+        int ccl      = (int)uniformRand(0,id);
+        double u     = uniformRand();
         double price = (int)((side==BID)?uniformRand(70,105):uniformRand(95,130));
         Order* o;
         /**** Limit & Market Order ********************************************/
-        // if (u < .6) o = new LimitOrder(id++,0,"TEST",side,size,price);
+        // if (u<0.6) o = new LimitOrder(id++,0,"TEST",side,size,price);
         // else o = new MarketOrder(id++,0,"TEST",side,size);
         /**** Limit, Market & Cancel Order ************************************/
         if (u<0.6) o = new LimitOrder(id++,0,"TEST",side,size,price);
