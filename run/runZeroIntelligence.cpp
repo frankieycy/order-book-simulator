@@ -4,7 +4,7 @@ using namespace chrono;
 
 int main() {
     /**** parameters **********************************************************/
-    int n       = 1e4;
+    int n       = 1e5;
     int L       = 30;
     int LL      = 1000;
     int snpInt  = 1;
@@ -12,6 +12,7 @@ int main() {
     double lda  = 1;
     double mu   = 50;
     double nu   = 0.2;
+    string dataFolder = "test/";
     /**** ZI simulation *******************************************************/
     ZeroIntelligence zi(n,LL,L,lda,mu,nu,snpInt,snpLvl);
     zi.initOrderBook();
@@ -21,7 +22,10 @@ int main() {
     zi.printBook(30,10);
     auto t = duration_cast<microseconds>(t2-t1);
     cout << "processing time per order: " << (float)t.count()/n << "μs" << endl;
-    zi.printTradesToCsv("test_trades.csv");
-    zi.printDepthsLogToCsv("test_depths.csv");
+    /**** outputs *************************************************************/
+    zi.printTradesToJson(dataFolder+"trades.json");
+    zi.printDepthsLogToJson(dataFolder+"depths.json");
+    zi.printTradesToCsv(dataFolder+"trades.csv");
+    zi.printDepthsLogToCsv(dataFolder+"depths.csv");
     return 0;
 }

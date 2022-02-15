@@ -2,6 +2,7 @@
 main
 exe*
 test*
+plot*
 *.txt
 *.log
 _*
