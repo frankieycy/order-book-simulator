@@ -4,7 +4,7 @@ import pandas as pd
 plt.switch_backend("Agg")
 
 dataFolder = '../test/'
-plotFolder = '../plot/'
+plotFolder = '../test/'
 
 def main(t0,t1):
     trades = pd.read_csv(dataFolder+"trades.csv")
@@ -22,11 +22,11 @@ def main(t0,t1):
     tt = (trades['TIME']>=t0)&(trades['TIME']<=t1)
 
     fig = plt.figure(figsize=(8,4))
-    plt.plot(T[t],B[t],c='b',linestyle='--',linewidth=0.5,label='bid')
-    plt.plot(T[t],A[t],c='r',linestyle='--',linewidth=0.5,label='ask')
-    plt.plot(T[t],mid[t],c='0',linewidth=0.5,label='mid')
-    plt.plot(T[t],mic[t],c='0.6',linewidth=0.5,label='micro')
-    plt.scatter(TT[tt],TP[tt],c='k',s=10)
+    plt.step(T[t],B[t],c='b',ls='--',lw=0.5,zorder=0,label='bid')
+    plt.step(T[t],A[t],c='r',ls='--',lw=0.5,zorder=0,label='ask')
+    plt.step(T[t],mid[t],c='0',lw=1,zorder=0,label='mid')
+    plt.step(T[t],mic[t],c='0.6',lw=0.5,zorder=0,label='micro')
+    plt.scatter(TT[tt],TP[tt],c='k',s=10,zorder=1)
     plt.title('Zero-Intelligence Simulated Price Path')
     plt.xlabel('time')
     plt.ylabel('price')
@@ -37,4 +37,4 @@ def main(t0,t1):
     plt.close()
 
 if __name__ == '__main__':
-    main(10000,10100)
+    main(100,200)
