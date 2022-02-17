@@ -62,11 +62,11 @@ public:
     double setLimOrderArvRate(double arvRate);
     double setCclOrderArvRate(double arvRate);
     /**** main ****/
-    void initOrderBook(vector<int> sizes={});
-    void sendLimitOrder(Side side);
-    void sendMarketOrder(Side side);
-    void sendCancelOrder(Side side, int depthBtw=0);
-    void generateOrder();
+    virtual void initOrderBook(vector<int> sizes={});
+    virtual void sendLimitOrder(Side side);
+    virtual void sendMarketOrder(Side side);
+    virtual void sendCancelOrder(Side side, int depthBtw=0);
+    virtual void generateOrder();
     void simulate();
     void snapBook();
     void printBook(int bookLevels=0, int tradeLevels=0,

@@ -63,8 +63,7 @@ S& operator<<(S& out, const map<T1,T2>& m){
         out << "{";
         for(auto p=m.begin(); p!=m.end(); p++) {
             out << ((p==m.begin())?"":",");
-            if(is_same<T1,string>::value) out << "\"" << p->first << "\"";
-            else out << p->first;
+            out << "\"" << p->first << "\"";
             out << ":";
             if(is_same<T2,string>::value) out << "\"" << p->second << "\"";
             else out << p->second;

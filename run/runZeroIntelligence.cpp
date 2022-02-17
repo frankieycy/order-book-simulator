@@ -24,8 +24,6 @@ int main() {
     auto t = duration_cast<microseconds>(t2-t1);
     cout << "processing time per order: " << (float)t.count()/n << "μs" << endl;
     /**** outputs *************************************************************/
-    zi.printTradesToJson(dataFolder+"trades.json");
-    zi.printDepthsLogToJson(dataFolder+"depths.json");
     zi.printTradesToCsv(dataFolder+"trades.csv");
     zi.printDepthsLogToCsv(dataFolder+"depths.csv");
     return 0;
