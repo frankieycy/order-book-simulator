@@ -3,12 +3,13 @@ using namespace std;
 using namespace chrono;
 
 int main() {
+    srand(0);
     /**** parameters **********************************************************/
-    int n       = 1e5;
+    int n       = 1e4;
     int L       = 30;
     int LL      = 1000;
     int snpInt  = 1;
-    int snpLvl  = 5;
+    int snpLvl  = 40;
     double lda  = 1;
     double mu   = 50;
     double nu   = 0.2;
