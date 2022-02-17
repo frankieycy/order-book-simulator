@@ -19,7 +19,7 @@ private:
     map<int,map<double,int>> bidDepthsLog, askDepthsLog;
 public:
     /**** constructors ****/
-    ZeroIntelligence(); ~ZeroIntelligence(){};
+    ZeroIntelligence(); virtual ~ZeroIntelligence(){};
     ZeroIntelligence(int numOrder, int priceBnd, int limPriceBnd,
         double limOrderArvRate, double mktOrderArvRate, double cclOrderArvRate,
         int snapInterval=1e3, int snapBookLevels=50);
