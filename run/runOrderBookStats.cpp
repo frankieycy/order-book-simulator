@@ -1,5 +1,7 @@
-#include "zeroIntelligence.cpp"
-#include "orderBookStats.cpp"
+#include <iostream>
+#include "util.cpp"
+#include "zeroIntelligence.hpp"
+#include "orderBookStats.hpp"
 using namespace std;
 
 int main() {

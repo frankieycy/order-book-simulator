@@ -1,5 +1,6 @@
 .DS_store
 main
+obj*
 exe*
 test*
 plot*

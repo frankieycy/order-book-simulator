@@ -1,5 +1,5 @@
-#ifndef ORDERTYPE_H
-#define ORDERTYPE_H
+#ifndef ORDERTYPE_HPP
+#define ORDERTYPE_HPP
 
 enum OrderType {NULL_ORD, LIMIT, MARKET, CANCEL, MODIFY};
 

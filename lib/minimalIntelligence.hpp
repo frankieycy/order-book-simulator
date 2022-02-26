@@ -1,6 +1,6 @@
-#ifndef MINIMALINTELLIGENCE_CPP
-#define MINIMALINTELLIGENCE_CPP
-#include "zeroIntelligence.cpp"
+#ifndef MINIMALINTELLIGENCE_HPP
+#define MINIMALINTELLIGENCE_HPP
+#include "zeroIntelligence.hpp"
 using namespace std;
 
 class MinimalIntelligence : public ZeroIntelligence {

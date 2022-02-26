@@ -1,4 +1,6 @@
-#include "zeroIntelligence.cpp"
+#include <iostream>
+#include <chrono>
+#include "zeroIntelligence.hpp"
 using namespace std;
 using namespace chrono;
 

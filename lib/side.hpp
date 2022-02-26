@@ -1,5 +1,5 @@
-#ifndef SIDE_H
-#define SIDE_H
+#ifndef SIDE_HPP
+#define SIDE_HPP
 
 enum Side {NULL_SIDE, BID, ASK};
 
