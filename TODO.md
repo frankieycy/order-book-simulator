@@ -8,3 +8,4 @@
 * minimal-intelligence simulation
 * market-making simulation
 * order flow messaging, NASDAQ format
+* makefile & comments

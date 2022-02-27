@@ -1,6 +1,7 @@
 #ifndef UTIL_CPP
 #define UTIL_CPP
 #include <iostream>
+#include <fstream>
 #include <cmath>
 #include <string>
 #include <vector>
@@ -18,14 +19,38 @@ inline double normalCDF(double x, double mu=0, double sig=1){return erfc(-M_SQRT
 inline double stdNormalPDF(double x){return normalPDF(x);}
 inline double stdNormalCDF(double x){return normalCDF(x);}
 
-template <class S, class T>
-S& operator<<(S& out, const vector<T>& vec){
+template <typename T>
+void printToCsv(const vector<T>& v, string filename) {
+    ofstream f; f.open(filename);
+    for(auto p=v.begin(); p!=v.end(); p++) {
+        f << ((p==v.begin())?"":",");
+        if(is_same<T,string>::value) f << "\"" << *p << "\"";
+        else f << *p;
+    }
+    f.close();
+}
+
+template <typename T1, typename T2>
+void printToCsv(const map<T1,T2>& m, string filename) {
+    ofstream f; f.open(filename);
+    for(auto p=m.begin(); p!=m.end(); p++) {
+        f << ((p==m.begin())?"":"\n");
+        f << "\"" << p->first << "\"";
+        f << ",";
+        if(is_same<T2,string>::value) f << "\"" << p->second << "\"";
+        else f << p->second;
+    }
+    f.close();
+}
+
+template <typename S, typename T>
+S& operator<<(S& out, const vector<T>& v){
     // print elements of a vector
-    if(vec.size()==0) out << "[]";
+    if(v.size()==0) out << "[]";
     else{
         out << "[";
-        for(auto p=vec.begin(); p!=vec.end(); p++) {
-            out << ((p==vec.begin())?"":",");
+        for(auto p=v.begin(); p!=v.end(); p++) {
+            out << ((p==v.begin())?"":",");
             if(is_same<T,string>::value) out << "\"" << *p << "\"";
             else out << *p;
         }
@@ -34,14 +59,14 @@ S& operator<<(S& out, const vector<T>& vec){
     return out;
 }
 
-template <class S, class T>
-S& operator<<(S& out, const deque<T>& deq){
+template <typename S, typename T>
+S& operator<<(S& out, const deque<T>& d){
     // print elements of a deque
-    if(deq.size()==0) out << "[]";
+    if(d.size()==0) out << "[]";
     else{
         out << "[";
-        for(auto p=deq.begin(); p!=deq.end(); p++) {
-            out << ((p==deq.begin())?"":",");
+        for(auto p=d.begin(); p!=d.end(); p++) {
+            out << ((p==d.begin())?"":",");
             if(is_same<T,string>::value) out << "\"" << *p << "\"";
             else out << *p;
         }
@@ -50,7 +75,7 @@ S& operator<<(S& out, const deque<T>& deq){
     return out;
 }
 
-template <class S, class T1, class T2>
+template <typename S, typename T1, typename T2>
 S& operator<<(S& out, const map<T1,T2>& m){
     // print elements of a map
     if(m.size()==0) out << "{}";

@@ -44,17 +44,33 @@ void OrderBookStats::initStats() {
         topBidSizes[t] = Sa;
         midPrices[t] = (A+B)/2;
         microPrices[t] = (A*Sb+B*Sa)/(Sa+Sb);
-        imbalance[t] = (Sb-Sa)/(Sa+Sb);
+        imbalances[t] = (Sb-Sa)/(Sa+Sb);
+        spreads[t] = A-B;
         // TO-DO: bidCumDepthsLog, askCumDepthsLog
     }
 }
 
 void OrderBookStats::clearStats() {
-    //
+    for (auto t : trades) delete t;
+    depthsLogTime.clear();
+    trades.clear();
+    topBidSizes.clear();
+    topAskSizes.clear();
+    topBids.clear();
+    topAsks.clear();
+    midPrices.clear();
+    microPrices.clear();
+    imbalances.clear();
+    spreads.clear();
+    bidDepthsLog.clear();
+    askDepthsLog.clear();
+    bidCumDepthsLog.clear();
+    askCumDepthsLog.clear();
 }
 
 map<double,double> OrderBookStats::calcAvgBookDepths(vector<double> band, int aggInterval) {
     double n = depthsLogTime.size();
+    map<double,double> avgBookDepths;
     for (auto p : band) avgBookDepths[p] = 0;
     for (auto t : depthsLogTime) {
         if (t % aggInterval == 0) {

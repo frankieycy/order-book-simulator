@@ -13,11 +13,9 @@ private:
     vector<int> depthsLogTime;
     deque<Trade*> trades;
     map<int,int> topBidSizes, topAskSizes;
-    map<int,double> topBids, topAsks, midPrices, microPrices, imbalance;
+    map<int,double> topBids, topAsks, midPrices, microPrices, imbalances, spreads;
     map<int,map<double,int>> bidDepthsLog, askDepthsLog;
     map<int,map<double,int>> bidCumDepthsLog, askCumDepthsLog;
-    /**** stats log ****/
-    map<double,double> avgBookDepths;
 public:
     /**** constructors ****/
     OrderBookStats(){}; ~OrderBookStats();
@@ -35,7 +33,8 @@ public:
     map<int,double>* getTopAsksPtr() {return &topAsks;}
     map<int,double>* getMidPricesPtr() {return &midPrices;}
     map<int,double>* getMicroPricesPtr() {return &microPrices;}
-    map<int,double>* getImbalancePtr() {return &imbalance;}
+    map<int,double>* getImbalancesPtr() {return &imbalances;}
+    map<int,double>* getSpreadsPtr() {return &spreads;}
     map<int,map<double,int>> getBidDepthsLog() const {return bidDepthsLog;}
     map<int,map<double,int>> getAskDepthsLog() const {return askDepthsLog;}
     map<int,map<double,int>>* getBidDepthsLogPtr() {return &bidDepthsLog;}
